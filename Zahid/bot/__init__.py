@@ -7,7 +7,7 @@ from typing import Union, Optional, AsyncGenerator
 from aiohttp import web
 
 
-class TechVJXBot(Client):
+class ZahidXBot(Client):
 
     def __init__(self):
         super().__init__(
@@ -62,7 +62,7 @@ class TechVJXBot(Client):
                 yield message
                 current += 1
       
-TechVJBot = TechVJXBot()
+ZahidBot = ZahidXBot()
 
 multi_clients = {}
 work_loads = {}

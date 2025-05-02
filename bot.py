@@ -19,20 +19,20 @@ from aiohttp import web
 from plugins import web_server
 from plugins.clone import restart_bots
 
-from TechVJ.bot import TechVJBot
-from TechVJ.util.keepalive import ping_server
-from TechVJ.bot.clients import initialize_clients
+from Zahid.bot import ZahidBot
+from Zahid.util.keepalive import ping_server
+from Zahid.bot.clients import initialize_clients
 
 ppath = "plugins/*.py"
 files = glob.glob(ppath)
-TechVJBot.start()
+ZahidBot.start()
 loop = asyncio.get_event_loop()
 
 
 async def start():
     print('\n')
     print('Initalizing Your Bot')
-    bot_info = await TechVJBot.get_me()
+    bot_info = await ZahidBot.get_me()
     await initialize_clients()
     for name in files:
         with open(name) as a:
@@ -50,8 +50,8 @@ async def start():
     b_users, b_chats = await db.get_banned()
     temp.BANNED_USERS = b_users
     temp.BANNED_CHATS = b_chats
-    me = await TechVJBot.get_me()
-    temp.BOT = TechVJBot
+    me = await ZahidBot.get_me()
+    temp.BOT = ZahidBot
     temp.ME = me.id
     temp.U_NAME = me.username
     temp.B_NAME = me.first_name
@@ -61,12 +61,12 @@ async def start():
     now = datetime.now(tz)
     time = now.strftime("%H:%M:%S %p")
     try:
-        await TechVJBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
+        await ZahidBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
     except:
         print("Make Your Bot Admin In Log Channel With Full Rights")
     for ch in CHANNELS:
         try:
-            k = await TechVJBot.send_message(chat_id=ch, text="**Bot Restarted**")
+            k = await ZahidBot.send_message(chat_id=ch, text="**Bot Restarted**")
             await k.delete()
         except:
             print("Make Your Bot Admin In File Channels With Full Rights")
