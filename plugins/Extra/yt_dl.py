@@ -9,6 +9,7 @@ from youtube_search import YoutubeSearch
 from youtubesearchpython import SearchVideos
 from yt_dlp import YoutubeDL
 
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
 @Client.on_message(filters.command(['song', 'mp3']) & filters.private)
 async def song(client, message):
@@ -99,6 +100,7 @@ async def vsong(client, message: Message):
     sedlyf = wget.download(kekme)
     opts = {
         "format": "best",
+        "cookiefile": COOKIES_FILE,      # ← here as well
         "addmetadata": True,
         "key": "FFmpegMetadata",
         "prefer_ffmpeg": True,
