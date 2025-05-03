@@ -131,7 +131,7 @@ TUTORIAL = environ.get('TUTORIAL', '') # How Open Shortner Link Video Link , Cha
 CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
 MAX_B_TN = environ.get("MAX_B_TN", "5")
 PORT = environ.get("PORT", "8080")
-MSG_ALRT = environ.get('MSG_ALRT', 'Hello My Dear Friends ❤️')
+MSG_ALRT = environ.get('MSG_ALRT', 'Keep Growing Mate')
 CUSTOM_FILE_CAPTION = environ.get("CUSTOM_FILE_CAPTION", f"{script.CAPTION}")
 BATCH_FILE_CAPTION = environ.get("BATCH_FILE_CAPTION", CUSTOM_FILE_CAPTION)
 IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", f"{script.IMDB_TEMPLATE_TXT}")
@@ -160,7 +160,7 @@ if 'DYNO' in environ:
     ON_HEROKU = True
 else:
     ON_HEROKU = False
-URL = environ.get("URL", "https://testofvjfilter-1fa60b1b8498.herokuapp.com/")
+URL = environ.get("URL", "")
 
 
 # Rename Info : If True Then Bot Rename File Else Not
@@ -172,7 +172,7 @@ AUTO_APPROVE_MODE = bool(environ.get('AUTO_APPROVE_MODE', True)) # Set True or F
 
 
 # Start Command Reactions
-REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "🌚", "🆒", "👻", "😁"] #don't add any emoji because tg not support all emoji reactions
+REACTIONS = ["🤝", "😇", "🤗", "😍", "👍", "🎅", "😐", "🥰", "🤩", "😱", "🤣", "😘", "👏", "😛", "😈", "🎉", "⚡️", "🫡", "🤓", "😎", "🏆", "🔥", "🤭", "👻", "😁"] #don't add any emoji because tg not support all emoji reactions
 
 
 if MULTIPLE_DATABASE == False:

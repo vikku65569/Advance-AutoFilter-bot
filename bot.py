@@ -44,7 +44,7 @@ async def start():
             load = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(load)
             sys.modules["plugins." + plugin_name] = load
-            print("Tech VJ Imported => " + plugin_name)
+            print("Tactition Imported => " + plugin_name)
     
     asyncio.create_task(ping_server())
     b_users, b_chats = await db.get_banned()
@@ -72,7 +72,6 @@ async def start():
             print("Make Your Bot Admin In File Channels With Full Rights")
     try:
         print("Make Your Bot Admin In Force Subscribe Channel With Full Rights")
-        await k.delete()
     except:
         print("Make Your Bot Admin In Force Subscribe Channel With Full Rights")
     if CLONE_MODE == True:
