@@ -172,7 +172,7 @@ OTHER DB :-
 ★ Usᴇᴅ Sᴛᴏʀᴀɢᴇ: <code>{} MB</code>
 ★ Fʀᴇᴇ Sᴛᴏʀᴀɢᴇ: <code>{} MB</code></b>"""
     
-    LOG_TEXT_G = """#NewGroup
+    LOG_TEXT_G = """Boss NewGroup Added To Books Database 🔥
 Gʀᴏᴜᴘ = {}(<code>{}</code>)
 Tᴏᴛᴀʟ Mᴇᴍʙᴇʀs = <code>{}</code>
 Aᴅᴅᴇᴅ Bʏ - {}"""
@@ -496,19 +496,13 @@ Aᴠᴀɪʟᴀʙʟᴇ ᴄᴏᴍᴍᴀɴᴅs:
 மேலும் உங்கள் குழுவில் பயிற்சி வீடியோ தொகுப்பு ஆகிடும்..."""
 
     ENGLISH_INFO = """
-Hey <a href='tg://settings'>ᴍʏ ғʀɪᴇɴᴅ</a> 
+Hey <a href='tg://settings'>Dear</a> 
 
-
- Now you can earn money on Telegram too.
-
- You must have 1 group to earn money by telegram.
- If you have a group, you can earn money by adding our bot to your group.
-
- The more members you have in your group, the higher your income will be.
+ Now you can earn money on Telegram With Us If You Have Some Audience Releated to Self Improvement Niche you can earn money by adding our bot to your group .The more members you have in your group, the higher your income will be.
 
  How and what to do
 
- Step 1: Administer this Our Filter Bot bot to your group
+ Step 1: Administer this Bot bot to your group and Reach Out To Us Via @Self_Improvement_AudioBook_Bot
 
  Step 2: Add your website and API
 
