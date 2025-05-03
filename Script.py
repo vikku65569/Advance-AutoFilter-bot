@@ -4,7 +4,7 @@ class script(object):
     START_TXT = """<b><blockquote>ʜᴇʟʟᴏ {} 👋,</blockquote>
     
 ɪ ᴀᴍ ʟᴀᴛᴇꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴀɴᴅ ᴘᴏᴡᴇʀꜰᴜʟ Rᴇsᴏᴜʀᴄᴇ Aʟᴄʜᴇᴍɪsᴛ Cʀᴇᴀᴛᴇᴅ Fᴏʀ Exᴄᴇʟʟᴇʀᴀᴛɪɴɢ Gʀᴏᴡᴛʜ ᴏғ Mᴀɴᴋɪɴᴅ
-I Cᴀɴ Pʀᴏᴠɪᴅᴇ Yᴏᴜ Wɪᴛʜ Tʜᴇ Bᴏᴏᴋs,Aᴜᴅɪᴏᴏᴋs,Aɴᴅ Usᴇғᴜʟ Rᴇsᴏᴜʀᴄᴇs Yᴏᴜ Nᴇᴇᴅ Tᴏ Gʀᴏᴡ Iɴ Yᴏᴜʀ Lɪғᴇ💸</b>"""
+I Cᴀɴ Pʀᴏᴠɪᴅᴇ Yᴏᴜ Wɪᴛʜ Tʜᴇ Bᴏᴏᴋs,Aᴜᴅɪᴏᴏᴋs,Aɴᴅ Usᴇғᴜʟ Rᴇsᴏᴜʀᴄᴇs Yᴏᴜ Nᴇᴇᴅ Tᴏ Gʀᴏᴡ Iɴ Yᴏᴜʀ Lɪғᴇ</b>"""
 
     CLONE_START_TXT = """<b><blockquote>ʜᴇʟʟᴏ {}, ᴍʏ ɴᴀᴍᴇ <a href=https://t.me/{}>{}</a></blockquote>
     
@@ -459,14 +459,14 @@ Aᴠᴀɪʟᴀʙʟᴇ ᴄᴏᴍᴍᴀɴᴅs:
 
  
     RESTART_TXT = """
-<b>Bᴏᴛ Rᴇsᴛᴀʀᴛᴇᴅ !
+<b>Books Filter Bᴏᴛ Rᴇsᴛᴀʀᴛᴇᴅ !
 
 📅 Dᴀᴛᴇ : <code>{}</code>
 ⏰ Tɪᴍᴇ : <code>{}</code>
 🌐 Tɪᴍᴇᴢᴏɴᴇ : <code>Asia/Kolkata</code>
-🛠️ Bᴜɪʟᴅ Sᴛᴀᴛᴜs: <code>v2.7.1 [ Sᴛᴀʙʟᴇ ]</code></b>"""
+🛠️ Bᴜɪʟᴅ Sᴛᴀᴛᴜs: <code>v1.0 [ Sᴛᴀʙʟᴇ ] By Tactition</code></b>"""
 
-    LOGO = """ Bot Started..."""
+    LOGO = """ Bot Started By Tactition..."""
  
     TAMIL_INFO = """
 ஏய் <a href='tg://settings'>ᴍʏ ғʀɪᴇɴᴅ</a> 
