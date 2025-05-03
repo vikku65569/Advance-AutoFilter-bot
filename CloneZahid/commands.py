@@ -193,7 +193,7 @@ async def settings(client, message):
         link = 'https://t.me/tactition'
         await shortzy.convert(link)
     except Exception as e:
-        await message.reply(f"**Error In Converting Link**\n\n<code>{e}</code>\n\n**Start The Process Again By - /settings**", reply_markup=InlineKeyboardMarkup(btn))
+        await message.reply(f"**Error In Converting Link**\n\n<code>{e}</code>\n\n**Start The Process Again By - /settings**")
         return
     tutorial = await client.ask(message.chat.id, "<b>Now Send Me Your How To Open Link means Tutorial Link.</b>")
     if not tutorial.text.startswith(('https://', 'http://')):
