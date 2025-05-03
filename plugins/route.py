@@ -4,7 +4,7 @@ import re, math, logging, secrets, mimetypes, time
 from info import *
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
-from Zahid.bot import multi_clients, work_loads, ZahidBot
+from Zahid.bot import multi_clients, work_loads, ZahidXBot
 from Zahid.server.exceptions import FIleNotFound, InvalidHash
 from Zahid import StartTime, __version__
 from Zahid.util.custom_dl import ByteStreamer
@@ -19,7 +19,7 @@ async def root_route_handler(request):
         {
             "server_status": "Running Advanced-Telegram-Audiobook FileShare Bot",
             "uptime": get_readable_time(time.time() - StartTime),
-            "telegram_bot": "@" + ZahidBot.username+" By @Tactition",
+            "telegram_bot": "@" + ZahidXBot.username+" By @Tactition",
             "connected_bots": len(multi_clients),
             "loads": dict(
                 ("bot" + str(c + 1), l)
