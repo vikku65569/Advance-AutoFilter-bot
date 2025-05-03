@@ -9,102 +9,172 @@ from youtube_search import YoutubeSearch
 from youtubesearchpython import SearchVideos
 from yt_dlp import YoutubeDL
 
-# Adjust this to match your bot’s maximum file size (bytes)
-TG_MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), 'cookies.txt')
 
-# common yt-dlp options
-YDL_OPTS_AUDIO = {
-    "format": "bestaudio/best",
-    "outtmpl": "%(id)s.%(ext)s",
-    "quiet": True,
-    "no_warnings": True,
-    "postprocessors": [
-        {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"},
-    ],
-}
-YDL_OPTS_VIDEO = {
-    "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best",
-    "outtmpl": "%(id)s.%(ext)s",
-    "quiet": True,
-    "no_warnings": True,
-    "merge_output_format": "mp4",
-}
+def check_cookies():
+    if not os.path.exists(COOKIES_FILE):
+        raise FileNotFoundError(
+            "❌ Cookies file not found. Create cookies.txt with fresh YouTube cookies\n"
+            "Guide: https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies"
+        )
+    return True
 
-async def run_ydl(opts: dict, url: str) -> str:
-    """Run yt_dlp with given opts on URL, return path to downloaded file."""
-    loop = asyncio.get_event_loop()
-    # run in executor to avoid blocking
-    return await loop.run_in_executor(None, _download_sync, opts, url)
+def check_ffmpeg():
+    if os.system("ffmpeg -version > /dev/null 2>&1") != 0:
+        raise EnvironmentError(
+            "❌ FFmpeg not installed! Install from https://ffmpeg.org/\n"
+            "For Linux: sudo apt install ffmpeg\n"
+            "For Windows: Download from official site"
+        )
 
-def _download_sync(opts: dict, url: str) -> str:
-    with YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info)
-        # if postprocessor changed extension, fix filename
-        if "requested_formats" in info and info.get("ext"):
-            base, _ = os.path.splitext(filename)
-            filename = f"{base}.{info['ext']}"
-        return filename
-
-@Client.on_message(filters.private & filters.command("song"))
-async def song_handler(client: Client, message: Message):
-    """Download audio from a YouTube URL and send it as mp3."""
-    if len(message.command) < 2:
-        return await message.reply_text("Usage: `/song <YouTube URL>`", parse_mode="markdown")
-
-    url = message.command[1]
-    msg = await message.reply_text("🔎 Searching for best audio...", quote=True)
-
+@Client.on_message(filters.command(['song', 'mp3']) & filters.private)
+async def song(client, message):
+    audio_file = None
+    thumb_name = None
     try:
-        # create a temp dir for this download
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            path = await run_ydl(YDL_OPTS_AUDIO, url)
+        check_cookies()
+        check_ffmpeg()
+        user_id = message.from_user.id 
+        query = ' '.join(message.command[1:]) or None
+        
+        if not query:
+            return await message.reply("❌ Example: /song vaa vaathi song")
+            
+        m = await message.reply(f"🔍 Searching...\n`{query}`")
+        
+        # Check for live stream URL
+        if 'youtube.com/live/' in query.lower():
+            return await m.edit("❌ Live streams cannot be downloaded")
 
-            size = os.path.getsize(path)
-            if size > TG_MAX_FILE_SIZE:
-                return await msg.edit_text(f"❌ File is too large ({size/1024/1024:.1f} MB).")
+        results = YoutubeSearch(query, max_results=1).to_dict()
+        if not results:
+            return await m.edit("❌ No results found")
+            
+        video = results[0]
+        link = f"https://youtube.com{video['url_suffix']}"
+        
+        if video.get('live') or video.get('is_live'):
+            return await m.edit("❌ Live streams are not supported")
 
-            await client.send_audio(
-                chat_id=message.chat.id,
-                audio=path,
-                title=os.path.basename(path),
-                caption="Here’s your MP3 😉",
-                timeout=120,
-                quote=False
-            )
+        # Download thumbnail
+        thumb_name = f'thumb_{user_id}.jpg'
+        try:
+            response = requests.get(video["thumbnails"][0], timeout=10)
+            response.raise_for_status()
+            with open(thumb_name, 'wb') as f:
+                f.write(response.content)
+        except Exception:
+            thumb_name = None
+
+        # yt-dlp configuration
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': f'%(id)s_{user_id}.%(ext)s',
+            'cookiefile': COOKIES_FILE,
+            'noplaylist': True,
+            'quiet': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+            'ignore_no_formats_error': True,
+            'force-ipv4': True,
+            'sleep_interval': 5,
+            'max-sleep-interval': 15,
+        }
+
+        await m.edit("⬇️ Downloading...")
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(link, download=True)
+            audio_file = ydl.prepare_filename(info).replace('.webm', '.mp3')
+
+        await message.reply_audio(
+            audio_file,
+            caption=f"🎵 {info['title']}\nvia @{client.me.username}",
+            duration=info['duration'],
+            thumb=thumb_name
+        )
+        await m.delete()
+
     except Exception as e:
-        await msg.edit_text(f"⚠ Failed to download audio:\n`{e}`")
-    else:
-        await msg.delete()
+        await message.reply(f"❌ Error: {str(e)}")
+    finally:
+        for f in [audio_file, thumb_name]:
+            try:
+                if f and os.path.exists(f):
+                    os.remove(f)
+            except:
+                pass
 
-@Client.on_message(filters.private & filters.command("video"))
-async def video_handler(client: Client, message: Message):
-    """Download video from a YouTube URL and send it as mp4."""
-    if len(message.command) < 2:
-        return await message.reply_text("Usage: `/video <YouTube URL>`", parse_mode="markdown")
-
-    url = message.command[1]
-    msg = await message.reply_text("🔎 Fetching best video...", quote=True)
-
+@Client.on_message(filters.command(["video", "mp4"]))
+async def vsong(client, message: Message):
+    video_file = None
+    thumb_file = None
     try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            os.chdir(tmpdir)
-            path = await run_ydl(YDL_OPTS_VIDEO, url)
+        check_cookies()
+        check_ffmpeg()
+        query = ' '.join(message.command[1:]) or None
+        if not query:
+            return await message.reply("❌ Example: /video Baby Shark Dance")
+            
+        pablo = await message.reply(f"🔍 Searching video...\n`{query}`")
+        
+        if 'youtube.com/live/' in query.lower():
+            return await pablo.edit("❌ Live streams cannot be downloaded")
 
-            size = os.path.getsize(path)
-            if size > TG_MAX_FILE_SIZE:
-                return await msg.edit_text(f"❌ File is too large ({size/1024/1024:.1f} MB).")
+        search = SearchVideos(query, offset=1, mode="dict", max_results=1)
+        result = search.result()
+        if not result.get("search_result"):
+            return await pablo.edit("❌ No video found")
+            
+        video = result["search_result"][0]
+        url = video["link"]
+        
+        if video.get('live') or video.get('is_live'):
+            return await pablo.edit("❌ Live streams are not supported")
 
-            await client.send_video(
-                chat_id=message.chat.id,
-                video=path,
-                caption="Enjoy your video 🎬",
-                timeout=120,
-                supports_streaming=True,
-                quote=False
-            )
+        # Download thumbnail
+        thumb_file = f"thumb_{video['id']}.jpg"
+        try:
+            response = requests.get(f"https://img.youtube.com/vi/{video['id']}/hqdefault.jpg", timeout=10)
+            response.raise_for_status()
+            with open(thumb_file, 'wb') as f:
+                f.write(response.content)
+        except Exception:
+            thumb_file = None
+
+        # yt-dlp configuration
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+            'outtmpl': f'%(id)s.%(ext)s',
+            'cookiefile': COOKIES_FILE,
+            'nocheckcertificate': True,
+            'quiet': True,
+            'retries': 3,
+            'ignore_no_formats_error': True,
+            'force-ipv4': True,
+            'throttled-rate': '100K',
+        }
+
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            video_file = ydl.prepare_filename(info)
+
+        await message.reply_video(
+            video_file,
+            caption=f"🎥 {info['title']}\nvia @{client.me.username}",
+            thumb=thumb_file,
+            supports_streaming=True
+        )
+        await pablo.delete()
+
     except Exception as e:
-        await msg.edit_text(f"⚠ Failed to download video:\n`{e}`")
-    else:
-        await msg.delete()
+        await message.reply(f"❌ Error: {str(e)}")
+    finally:
+        for f in [video_file, thumb_file]:
+            try:
+                if f and os.path.exists(f):
+                    os.remove(f)
+            except:
+                pass
