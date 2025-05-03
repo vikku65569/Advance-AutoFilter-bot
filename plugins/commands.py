@@ -412,25 +412,36 @@ async def start(client, message):
             return await message.reply_text(text="<b>ɪɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ ᴇxᴘɪʀᴇᴅ ʟɪɴᴋ</b>", protect_content=True)
             
     if data.startswith("sendfiles"):
-        chat_id = int("-" + file_id.split("-")[1])
-        userid = message.from_user.id if message.from_user else None
-        settings = await get_settings(chat_id)
-        pre = 'allfilesp' if settings['file_secure'] else 'allfiles'
-        g = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start={pre}_{file_id}")
-        btn = [[
-            InlineKeyboardButton('ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ', url=g)
-        ]]
-        if settings['tutorial']:
-            btn.append([InlineKeyboardButton('ʜᴏᴡ ᴛᴏ ᴅᴏᴡɴʟᴏᴀᴅ', url=await get_tutorial(chat_id))])
-        text = "<b>✅ ʏᴏᴜʀ ғɪʟᴇ ʀᴇᴀᴅʏ ᴄʟɪᴄᴋ ᴏɴ ᴅᴏᴡɴʟᴏᴀᴅ ɴᴏᴡ ʙᴜᴛᴛᴏɴ ᴛʜᴇɴ ᴏᴘᴇɴ ʟɪɴᴋ ᴛᴏ ɢᴇᴛ ғɪʟᴇ\n\n</b>"
-        if PREMIUM_AND_REFERAL_MODE == True:
-            text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴏᴘᴇɴɪɴɢ ʟɪɴᴋ ᴀɴᴅ ᴡᴀᴛᴄʜɪɴɢ ᴀᴅs ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"
-        k = await client.send_message(chat_id=message.from_user.id, text=text, reply_markup=InlineKeyboardMarkup(btn))
-        await asyncio.sleep(300)
-        await k.edit("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
-        return
-        
-    
+        try:
+            userid = message.from_user.id if message.from_user else None
+            chat_id = int("-" + file_id.split("-")[1])
+
+            ghost_url = await get_shortlink(chat_id, f"https://telegram.me/{temp.U_NAME}?start=allfiles_{file_id}")
+
+            client_msg = await client.send_message(
+                chat_id=userid,
+                text=f"👋 Hey {message.from_user.mention}\n\nDownload Link Generated ✔, Kindly click on download button below 👇 .\n\n",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton('📁 ᴅᴏᴡɴʟᴏᴀᴅ 📁', url=ghost_url)
+                        ],
+                        [
+                            InlineKeyboardButton('🎉 ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ : ʀᴇᴍᴏᴠᴇ ᴀᴅꜱ 🎊', callback_data="seeplans")
+                        ]
+                    ]
+                )
+            )
+
+            await asyncio.sleep(1800)
+            await client_msg.edit("<b>ʏᴏᴜʀ ᴍᴇꜱꜱᴀɢᴇ ɪꜱ ᴅᴇʟᴇᴛᴇᴅ !\nᴋɪɴᴅʟʏ ꜱᴇᴀʀᴄʜ ᴀɢᴀɪɴ.</b>")
+            return
+        except Exception as e:
+            print(f"Error handling sendfiles: {e}")
+
+
+
+
     elif data.startswith("short"):
         user = message.from_user.id
         chat_id = temp.SHORT.get(user)
