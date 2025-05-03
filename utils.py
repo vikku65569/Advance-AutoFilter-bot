@@ -596,7 +596,7 @@ async def check_verification(bot, userid):
     else:
         return False  
     
-async def send_all(bot, userid, files, ident, chat_id, user_name, query):
+async def send_all(bot, userid, files, ident, chat_id, user_name, query,message):
     settings = await get_settings(chat_id)
     if 'is_shortlink' in settings.keys():
         ENABLE_SHORTLINK = settings['is_shortlink']
