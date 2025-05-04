@@ -1,5 +1,4 @@
 
-
 import re, os, json, base64, logging
 from utils import temp
 from pyrogram import filters, Client, enums
@@ -7,9 +6,19 @@ from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameI
 from info import ADMINS, LOG_CHANNEL, FILE_STORE_CHANNEL, PUBLIC_FILE_STORE, DB_CHANNEL , WEBSITE_URL_MODE , WEBSITE_URL
 from database.ia_filterdb import unpack_new_file_id
 from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink, get_tutorial, send_all, get_cap
+import datetime
+import traceback
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot_logs.log"),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 async def allowed(_, __, message):
     if PUBLIC_FILE_STORE:
@@ -20,43 +29,112 @@ async def allowed(_, __, message):
 
 
 # ============================================
+import logging
+import traceback
+from pyrogram import filters
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("bot_logs.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 @Client.on_message((filters.document | filters.video | filters.audio | filters.photo) & filters.private & filters.create(allowed))
 async def incoming_gen_link(bot, message):
-    username = temp.U_NAME  # Removed await since temp.U_NAME is a string
-    # Copy the message/file to your dedicated DB channel for permanent storage.
-    post = await message.copy(DB_CHANNEL)
-    file_id = str(post.id)
-    string = 'file_' + file_id
-    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
-    user_id = message.from_user.id
-    if WEBSITE_URL_MODE:
-        share_link = f"{WEBSITE_URL}?Zahid={outstr}"
-    else:
-        share_link = f"https://t.me/{username}?start={outstr}"
-    # Log the request event in the log channel.
-    await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link {post.id} By Forwarding the file to bot. Link: {share_link}")
+    try:
+        logger.info(f"New file received from user {message.from_user.id}")
+        username = temp.U_NAME
+        
+        # Copy to DB channel with logging
+        logger.debug(f"Attempting to copy message to DB channel {DB_CHANNEL}")
+        post = await message.copy(DB_CHANNEL)
+        logger.info(f"Message copied to DB channel. Post ID: {post.id}")
+        
+        file_id = str(post.id)
+        string = 'file_' + file_id
+        outstr = base64.urlsafe_b64encode(string.encode()).decode().strip("=")
+        
+        # Generate share link
+        if WEBSITE_URL_MODE:
+            share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+        else:
+            share_link = f"https://t.me/{username}?start={outstr}"
+        
+        logger.debug(f"Generated share link: {share_link}")
+        
+        # Send link to user
+        await message.reply_text(f"**Here's Your Share Link:**\n`{share_link}`")
+        
+        # Detailed logging
+        log_text = f"""
+🆔 User ID: {message.from_user.id}
+👤 Username: @{message.from_user.username}
+📄 File ID: {post.id}
+🔗 Generated Link: {share_link}"""
+        await bot.send_message(LOG_CHANNEL, log_text)
+        logger.info("Successfully processed file request")
 
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        logger.error(f"Incoming Link Error: {str(e)}\n{error_trace}")
+        
+        error_msg = f"❌ Error in incoming_gen_link: {str(e)}"
+        await bot.send_message(LOG_CHANNEL, f"{error_msg}\n```{error_trace}```")
+        await message.reply_text("Failed to generate link. Please try again.")
 
 @Client.on_message(filters.command(['Tlink']) & filters.create(allowed))
 async def gen_link_s(bot, message):
-    username = temp.U_NAME  # Removed await since temp.U_NAME is a string
-    replied = message.reply_to_message
-    if not replied:
-        return await message.reply('Reply to a message to get a shareable link.')
-    # Copy the replied message to the dedicated DB channel.
-    post = await replied.copy(DB_CHANNEL)
-    file_id = str(post.id)
-    string = f"file_{file_id}"
-    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
-    user_id = message.from_user.id
-    if WEBSITE_URL_MODE:
-        share_link = f"{WEBSITE_URL}?Zahid={outstr}"
-    else:
-        share_link = f"https://t.me/{username}?start={outstr}"
-    # Log the request event.
-    await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link For {post.id} via Command. Link: {share_link}")
+    try:
+        logger.info(f"/Tlink command received from {message.from_user.id}")
+        username = temp.U_NAME
+        replied = message.reply_to_message
+        
+        if not replied:
+            logger.warning("/Tlink command used without replying to a message")
+            return await message.reply("❌ Please reply to a file to generate link")
+            
+        # Copy to DB channel with logging
+        logger.debug(f"Attempting to copy replied message to DB channel {DB_CHANNEL}")
+        post = await replied.copy(DB_CHANNEL)
+        logger.info(f"Replied message copied to DB channel. Post ID: {post.id}")
+        
+        file_id = str(post.id)
+        string = f"file_{file_id}"
+        outstr = base64.urlsafe_b64encode(string.encode()).decode().strip("=")
+        
+        # Generate share link
+        if WEBSITE_URL_MODE:
+            share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+        else:
+            share_link = f"https://t.me/{username}?start={outstr}"
+        
+        logger.debug(f"Generated share link via command: {share_link}")
+        
+        # Send link to user
+        await message.reply_text(f"**Here's Your Share Link:**\n`{share_link}`")
+        
+        # Enhanced logging
+        log_text = f"""
+🆔 User ID: {message.from_user.id}
+👤 Username: @{message.from_user.username}
+📄 File ID: {post.id}
+🔗 Generated Link: {share_link}
+🔖 Command Used: /Tlink"""
+        await bot.send_message(LOG_CHANNEL, log_text)
+        logger.info("Successfully processed /Tlink command")
 
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        logger.error(f"Command Link Error: {str(e)}\n{error_trace}")
+        
+        error_msg = f"❌ Error in gen_link_s: {str(e)}"
+        await bot.send_message(LOG_CHANNEL, f"{error_msg}\n```{error_trace}```")
+        await message.reply_text("Failed to generate link. Please try again.")
 # =============================================
 
 # @Client.on_message(filters.command(['link', 'plink']) & filters.create(allowed))
