@@ -174,10 +174,11 @@ async def start(client, message):
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:
-                    deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_TIME))
+                    btn = [[InlineKeyboardButton("✅ ɢᴇᴛ ғɪʟᴇ ᴀɢᴀɪɴ ✅", callback_data=f'del#{file_id}')]]
+                    deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN))
                     await asyncio.sleep(AUTO_DELETE_TIME)
                     await sent_msg.delete()
-                    await deleter_msg.edit_text(script.FILE_DELETED_MSG)
+                    await deleter_msg.edit_text(script.FILE_DELETED_MSG), reply_markup=InlineKeyboardMarkup(btn)
                     
                 return
 
