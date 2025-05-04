@@ -22,32 +22,26 @@ async def allowed(_, __, message):
 # ============================================
 
 # Enhanced: added filters.photo to support photos
-# @Client.on_message((filters.document | filters.video | filters.audio | filters.photo) & filters.private & filters.create(allowed))
-# async def incoming_gen_link(bot, message):
-#     username = (await bot.get_me()).username
-#     # Copy the message/file to your dedicated DB channel for permanent storage.
-#     post = await message.copy(DB_CHANNEL)
-#     file_id = str(post.id)
-#     string = 'file_' + file_id
-#     outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
-#     user_id = message.from_user.id
-#     user = await get_user(user_id)
-#     if WEBSITE_URL_MODE:
-#         share_link = f"{WEBSITE_URL}?Zahid={outstr}"
-#     else:
-#         share_link = f"https://t.me/{username}?start={outstr}"
-#     if user["base_site"] and user["shortener_api"] is not None:
-#         short_link = await get_short_link(user, share_link)
-#         await message.reply(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\n🖇️ sʜᴏʀᴛ ʟɪɴᴋ :- {short_link}</b>")
-#     else:
-#         await message.reply(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\n🔗 ᴏʀɪɢɪɴᴀʟ ʟɪɴᴋ :- {share_link}</b>")
-#     # Log the request event in the log channel.
-#     await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link {post.id} By Forwarding the file to bot. Link: {share_link}")
+@Client.on_message((filters.document | filters.video | filters.audio | filters.photo) & filters.private & filters.create(allowed))
+async def incoming_gen_link(bot, message):
+    username =  (await temp.U_NAME)
+    # Copy the message/file to your dedicated DB channel for permanent storage.
+    post = await message.copy(DB_CHANNEL)
+    file_id = str(post.id)
+    string = 'file_' + file_id
+    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
+    user_id = message.from_user.id
+    if WEBSITE_URL_MODE:
+        share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+    else:
+        share_link = f"https://t.me/{username}?start={outstr}"
+    # Log the request event in the log channel.
+    await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link {post.id} By Forwarding the file to bot. Link: {share_link}")
         
 
 @Client.on_message(filters.command(['Tlink']) & filters.create(allowed))
 async def gen_link_s(bot, message):
-    username = (await bot.get_me()).username
+    username = (await temp.U_NAME)
     replied = message.reply_to_message
     if not replied:
         return await message.reply('Reply to a message to get a shareable link.')

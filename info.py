@@ -53,6 +53,11 @@ DB_CHANNEL = int(environ.get("DB_CHANNEL", "-1002141494142"))
 AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "120")) # Time in Seconds
 AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "2")) # Time in Minutes
 
+# Website Info:
+WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', False)) # Set True or False
+# If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
+WEBSITE_URL = environ.get("WEBSITE_URL", "https://webassetsblog.infinityfreeapp.com/telegram-bot/") # For More Information Check Video On Yt -
+
 # This Channel Is For Delete Index File, Forward Your File In This Channel Which You Want To Delete Then Bot Automatically Delete That File From Database.
 DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch for dch in environ.get('DELETE_CHANNELS', '0').split()]  # For Multiple Id Use One Space Between Each.
 
@@ -132,11 +137,6 @@ SHORTLINK_URL = environ.get('SHORTLINK_URL', '')
 SHORTLINK_API = environ.get('SHORTLINK_API', '')
 TUTORIAL = environ.get('TUTORIAL', '') # How Open Shortner Link Video Link , Channel Link Where You Upload Your Video.
 
-
-# Website Info:
-WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', False)) # Set True or False
-# If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
-WEBSITE_URL = environ.get("WEBSITE_URL", "https://webassetsblog.infinityfreeapp.com/telegram-bot/") # For More Information Check Video On Yt -
 
 # Others
 CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
