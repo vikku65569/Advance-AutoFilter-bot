@@ -44,43 +44,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@Client.on_message((filters.document | filters.video | filters.audio | filters.photo) & filters.private & filters.create(allowed))
-async def incoming_gen_link(bot, message):
-    try:
-        logger.info(f"New file received from user {message.from_user.id}")
-        username = temp.U_NAME
-        # Copy to DB channel with logging
-        post = await message.copy(DB_CHANNEL)
-        file_id = str(post.id)
-        string = 'file_' + file_id
-        outstr = base64.urlsafe_b64encode(string.encode()).decode().strip("=")
-        # Generate share link
-        if WEBSITE_URL_MODE:
-            share_link = f"{WEBSITE_URL}?Zahid={outstr}"
-        else:
-            share_link = f"https://t.me/{username}?start={outstr}"
-        # Send link to user
-        await message.reply_text(f"**Here's Your Share Link:**\n`{share_link}`")
-        
-        # Detailed logging
-        log_text = f"""
-        🆔 User ID: {message.from_user.id}
-        👤 Username: @{message.from_user.username}
-        📄 File ID: {post.id}
-        🔗 Generated Link: {share_link}"""
-        
-        await bot.send_message(LOG_CHANNEL, log_text)
-        logger.info("Successfully processed file request")
-
-    except Exception as e:
-        error_trace = traceback.format_exc()
-        logger.error(f"Incoming Link Error: {str(e)}\n{error_trace}")
-        
-        error_msg = f"❌ Error in incoming_gen_link: {str(e)}"
-        await bot.send_message(LOG_CHANNEL, f"{error_msg}\n```{error_trace}```")
-        await message.reply_text("Failed to generate link. Please try again.")
-
-@Client.on_message(filters.command(['Tlink']) & filters.create(allowed))
+@Client.on_message(filters.command(['link']) & filters.create(allowed))
 async def gen_link_s(bot, message):
     try:
         logger.info(f"/link command received from {message.from_user.id}")
@@ -104,7 +68,7 @@ async def gen_link_s(bot, message):
             share_link = f"https://t.me/{username}?start={outstr}"
         
         # Send link to user
-        await message.reply_text(f"**Here's Your Share Link:**\n`{share_link}`")
+        await message.reply_text(f"**Here's Your Share Link:**\n{share_link}")
         
         # Enhanced logging
         log_text = f"""
