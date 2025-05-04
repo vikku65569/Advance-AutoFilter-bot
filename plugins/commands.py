@@ -1,5 +1,5 @@
 import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64, binascii
-from Script import script
+from Script import *
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
@@ -174,7 +174,7 @@ async def start(client, message):
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:
-                    deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG)
+                    deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_TIME))
                     await asyncio.sleep(AUTO_DELETE_TIME)
                     await sent_msg.delete()
                     await deleter_msg.edit_text(script.FILE_DELETED_MSG)
