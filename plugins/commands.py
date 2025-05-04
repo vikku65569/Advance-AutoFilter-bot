@@ -1,4 +1,4 @@
-import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64
+import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64, binascii
 from Script import script
 from pyrogram import Client, filters, enums
 from pyrogram.errors import ChatAdminRequired, FloodWait
@@ -25,13 +25,13 @@ def formate_file_name(file_name):
     return truncated + ""
 
 
-
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except:
         pass
+    # group handling code
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [
         # [
@@ -51,9 +51,11 @@ async def start(client, message):
             await client.send_message(LOG_CHANNEL, script.LOG_TEXT_G.format(message.chat.title, message.chat.id, total, "Unknown"))       
             await db.add_chat(message.chat.id, message.chat.title)
         return 
+    # User registration
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
         await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
+    # Handle basic /start without parameters
     if len(message.command) != 2:
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
@@ -101,7 +103,65 @@ async def start(client, message):
             parse_mode=enums.ParseMode.HTML
         )
         return
-    
+
+    # New Base64 URL Handling ==============================================
+    data = message.command[1]
+
+    try:
+        # Attempt to decode as base64 first
+        decoded = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode(
+            "ascii"
+        )
+        if decoded.startswith("file_"):
+            _, db_message_id = decoded.split("_", 1)
+        orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
+
+        # Apply existing security checks
+        if not await db.has_premium_access(message.from_user.id):
+            if not await db.has_premium_access(message.from_user.id):
+                if not await check_verification(client, message.from_user.id) and VERIFY == True:
+                    btn = [[
+                        InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, message.from_user.id, f"https://telegram.me/{temp.U_NAME}?start="))
+                    ],[
+                        InlineKeyboardButton("ʜᴏᴡ ᴛᴏ ᴠᴇʀɪғʏ", url=VERIFY_TUTORIAL)
+                    ]]
+                    text = "<b>ʜᴇʏ {} 👋,\n\nʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ ᴛᴏᴅᴀʏ, ᴘʟᴇᴀꜱᴇ ᴄʟɪᴄᴋ ᴏɴ ᴠᴇʀɪғʏ & ɢᴇᴛ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇꜱꜱ ғᴏʀ ᴛᴏᴅᴀʏ</b>"
+                    if PREMIUM_AND_REFERAL_MODE == True:
+                        text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"
+                    await message.reply_text(
+                        text=text.format(message.from_user.mention),
+                        protect_content=True,
+                        reply_markup=InlineKeyboardMarkup(btn)
+                    )
+                    return
+
+            # Use existing file sending logic
+            if orig_msg.media:
+                # ... [existing media handling with caption formatting] ...
+                msg = await client.send_cached_media(
+                    chat_id=message.from_user.id,
+                    file_id=orig_msg.file_id,
+                    caption=f_caption,
+                    protect_content=True,
+                    reply_markup=reply_markup,
+                )
+            else:
+                await orig_msg.copy(chat_id=message.from_user.id)
+
+            # Apply existing auto-delete logic
+            k = await message.reply_text(script.AUTO_DELETE_MSG)
+            await asyncio.sleep(AUTO_DELETE_TIME)
+            await msg.delete()
+            await k.edit_text(script.FILE_DELETED_MSG)
+            return
+
+    except (binascii.Error, ValueError, AttributeError):
+        # Not a base64 URL, continue with other handlers
+        pass
+    except Exception as e:
+        await message.reply_text(f"Error processing request: {str(e)}")
+        return
+
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
             if REQUEST_TO_JOIN_MODE == True:
@@ -146,7 +206,7 @@ async def start(client, message):
         except Exception as e:
             print(e)
             return await message.reply_text("something wrong with force subscribe.")
-            
+
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
@@ -305,7 +365,7 @@ async def start(client, message):
                     reply_markup = InlineKeyboardMarkup(button)
                 else:
                     reply_markup = None
-                    
+
                 msg = await client.send_cached_media(
                     chat_id=message.from_user.id,
                     file_id=msg.get("file_id"),
@@ -314,7 +374,7 @@ async def start(client, message):
                     reply_markup=reply_markup
                 )
                 filesarr.append(msg)
-                
+
             except FloodWait as e:
                 await asyncio.sleep(e.value)
                 msg = await client.send_cached_media(
@@ -335,7 +395,7 @@ async def start(client, message):
             await x.delete()
         await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")  
         return
-    
+
     elif data.split("-", 1)[0] == "DSTORE":
         sts = await message.reply("<b>ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...</b>")
         b_string = data.split("-", 1)[1]
@@ -366,7 +426,7 @@ async def start(client, message):
                     fileName = {quote_plus(get_name(log_msg))}
                     stream = f"{URL}watch/{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
                     download = f"{URL}{str(log_msg.id)}/{quote_plus(get_name(log_msg))}?hash={get_hash(log_msg)}"
- 
+
                 if STREAM_MODE == True:
                     button = [[
                         InlineKeyboardButton("• ᴅᴏᴡɴʟᴏᴀᴅ •", url=download),
@@ -418,7 +478,7 @@ async def start(client, message):
             await verify_user(client, userid, token)
         else:
             return await message.reply_text(text="<b>ɪɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ ᴇxᴘɪʀᴇᴅ ʟɪɴᴋ</b>", protect_content=True)
-            
+
     if data.startswith("sendfiles"):
         chat_id = int("-" + file_id.split("-")[1])
         userid = message.from_user.id if message.from_user else None
@@ -437,8 +497,7 @@ async def start(client, message):
         await asyncio.sleep(300)
         await k.edit("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
         return
-        
-    
+
     elif data.startswith("short"):
         user = message.from_user.id
         chat_id = temp.SHORT.get(user)
@@ -457,7 +516,7 @@ async def start(client, message):
         await asyncio.sleep(1200)
         await k.edit("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
         return
-        
+
     elif data.startswith("all"):
         files = temp.GETALL.get(file_id)
         if not files:
@@ -511,7 +570,7 @@ async def start(client, message):
             await x.delete()
         await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
         return    
-        
+
     elif data.startswith("files"):
         user = message.from_user.id
         if temp.SHORT.get(user)==None:
@@ -914,7 +973,6 @@ async def settings(client, message):
             )
 
 
-
 @Client.on_message(filters.command('set_template'))
 async def save_template(client, message):
     sts = await message.reply("Checking template")
@@ -1038,7 +1096,7 @@ async def requests(bot, message):
             InlineKeyboardButton('View Request', url=f"{reported_post.link}")
         ]]
         await message.reply_text("<b>Your request has been added! Please wait for some time.\n\nJoin Channel First & View Request</b>", reply_markup=InlineKeyboardMarkup(btn))
-    
+
 @Client.on_message(filters.command("send") & filters.user(ADMINS))
 async def send_msg(bot, message):
     if message.reply_to_message:
@@ -1123,7 +1181,7 @@ async def shortlink(bot, message):
     await save_group_settings(grpid, 'shortlink_api', api)
     await save_group_settings(grpid, 'is_shortlink', True)
     await reply.edit_text(f"<b>Successfully added shortlink API for {title}.\n\nCurrent Shortlink Website: <code>{shortlink_url}</code>\nCurrent API: <code>{api}</code></b>")
-    
+
 @Client.on_message(filters.command("setshortlinkoff"))
 async def offshortlink(bot, message):
     chat_type = message.chat.type
@@ -1143,7 +1201,7 @@ async def offshortlink(bot, message):
     await save_group_settings(grpid, 'is_shortlink', False)
     # ENABLE_SHORTLINK = False
     return await message.reply_text("Successfully disabled shortlink")
-    
+
 @Client.on_message(filters.command("setshortlinkon"))
 async def onshortlink(bot, message):
     chat_type = message.chat.type
@@ -1201,7 +1259,7 @@ async def showshortlink(bot, message):
             return await message.reply_text(f"<b>Tutorial: <code>{st}</code>\n\nShortener Url Not Connected\n\nYou can Connect Using /shortlink command</b>")
         else:
             return await message.reply_text("Shortener url and Tutorial Link Not Connected. Check this commands, /shortlink and /set_tutorial")
-        
+
 
 @Client.on_message(filters.command("set_tutorial"))
 async def settutorial(bot, message):
@@ -1323,7 +1381,7 @@ async def fsub(client, message):
         channels += f'{chat.title}\n'
     await save_group_settings(grpid, 'fsub', fsub_ids)
     await message.reply_text(f"<b>Successfully set force channels for {title} to\n\n{channels}\n\nYou can remove it by /nofsub.</b>")
-        
+
 
 @Client.on_message(filters.command("add_premium"))
 async def give_premium_cmd_handler(client, message):
@@ -1350,7 +1408,7 @@ async def give_premium_cmd_handler(client, message):
             await message.reply_text("Invalid time format. Please use '1day for days', '1hour for hours', or '1min for minutes', or '1month for months' or '1year for year'")
     else:
         await message.reply_text("<b>Usage: /add_premium user_id time \n\nExample /add_premium 1252789 10day \n\n(e.g. for time units '1day for days', '1hour for hours', or '1min for minutes', or '1month for months' or '1year for year')</b>")
-        
+
 @Client.on_message(filters.command("remove_premium"))
 async def remove_premium_cmd_handler(client, message):
     if PREMIUM_AND_REFERAL_MODE == False:
@@ -1377,7 +1435,7 @@ async def remove_premium_cmd_handler(client, message):
             await message.reply_text("Invalid time format.'")
     else:
         await message.reply_text("Usage: /remove_premium user_id")
-        
+
 @Client.on_message(filters.command("plan"))
 async def plans_cmd_handler(client, message): 
     if PREMIUM_AND_REFERAL_MODE == False:
@@ -1392,7 +1450,7 @@ async def plans_cmd_handler(client, message):
         caption=PAYMENT_TEXT,
         reply_markup=reply_markup
     )
-        
+
 @Client.on_message(filters.command("myplan"))
 async def check_plans_cmd(client, message):
     if PREMIUM_AND_REFERAL_MODE == False:
