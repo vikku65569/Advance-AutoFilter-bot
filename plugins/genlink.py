@@ -4,8 +4,9 @@ import re, os, json, base64, logging
 from utils import temp
 from pyrogram import filters, Client, enums
 from pyrogram.errors.exceptions.bad_request_400 import ChannelInvalid, UsernameInvalid, UsernameNotModified
-from info import ADMINS, LOG_CHANNEL, FILE_STORE_CHANNEL, PUBLIC_FILE_STORE
+from info import ADMINS, LOG_CHANNEL, FILE_STORE_CHANNEL, PUBLIC_FILE_STORE, DB_CHANNEL , WEBSITE_URL_MODE , WEBSITE_URL
 from database.ia_filterdb import unpack_new_file_id
+from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink, get_tutorial, send_all, get_cap
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -16,6 +17,55 @@ async def allowed(_, __, message):
     if message.from_user and message.from_user.id in ADMINS:
         return True
     return False
+
+
+# ============================================
+
+# Enhanced: added filters.photo to support photos
+# @Client.on_message((filters.document | filters.video | filters.audio | filters.photo) & filters.private & filters.create(allowed))
+# async def incoming_gen_link(bot, message):
+#     username = (await bot.get_me()).username
+#     # Copy the message/file to your dedicated DB channel for permanent storage.
+#     post = await message.copy(DB_CHANNEL)
+#     file_id = str(post.id)
+#     string = 'file_' + file_id
+#     outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
+#     user_id = message.from_user.id
+#     user = await get_user(user_id)
+#     if WEBSITE_URL_MODE:
+#         share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+#     else:
+#         share_link = f"https://t.me/{username}?start={outstr}"
+#     if user["base_site"] and user["shortener_api"] is not None:
+#         short_link = await get_short_link(user, share_link)
+#         await message.reply(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\n🖇️ sʜᴏʀᴛ ʟɪɴᴋ :- {short_link}</b>")
+#     else:
+#         await message.reply(f"<b>⭕ ʜᴇʀᴇ ɪs ʏᴏᴜʀ ʟɪɴᴋ:\n\n🔗 ᴏʀɪɢɪɴᴀʟ ʟɪɴᴋ :- {share_link}</b>")
+#     # Log the request event in the log channel.
+#     await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link {post.id} By Forwarding the file to bot. Link: {share_link}")
+        
+
+@Client.on_message(filters.command(['Tlink']) & filters.create(allowed))
+async def gen_link_s(bot, message):
+    username = (await bot.get_me()).username
+    replied = message.reply_to_message
+    if not replied:
+        return await message.reply('Reply to a message to get a shareable link.')
+    # Copy the replied message to the dedicated DB channel.
+    post = await replied.copy(DB_CHANNEL)
+    file_id = str(post.id)
+    string = f"file_{file_id}"
+    outstr = base64.urlsafe_b64encode(string.encode("ascii")).decode().strip("=")
+    user_id = message.from_user.id
+    # user = await get_user(user_id)
+    if WEBSITE_URL_MODE:
+        share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+    else:
+        share_link = f"https://t.me/{username}?start={outstr}"
+    # Log the request event.
+    await bot.send_message(LOG_CHANNEL, f"Boss User {message.from_user.id} requested file Link For {post.id} via Command. Link: {share_link}")
+
+# =============================================
 
 @Client.on_message(filters.command(['link', 'plink']) & filters.create(allowed))
 async def gen_link_s(bot, message):

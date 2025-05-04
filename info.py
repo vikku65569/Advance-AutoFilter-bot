@@ -133,6 +133,11 @@ SHORTLINK_API = environ.get('SHORTLINK_API', '')
 TUTORIAL = environ.get('TUTORIAL', '') # How Open Shortner Link Video Link , Channel Link Where You Upload Your Video.
 
 
+# Website Info:
+WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', False)) # Set True or False
+# If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
+WEBSITE_URL = environ.get("WEBSITE_URL", "https://webassetsblog.infinityfreeapp.com/telegram-bot/") # For More Information Check Video On Yt -
+
 # Others
 CACHE_TIME = int(environ.get('CACHE_TIME', 1800))
 MAX_B_TN = environ.get("MAX_B_TN", "5")
