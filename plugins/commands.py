@@ -115,7 +115,10 @@ async def start(client, message):
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
                 orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
-
+                
+                if not orig_msg:
+                    return await message.reply("❌ File not found in database")
+            
                 # === FORCE SUBSCRIBE CHECK ===
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
                     # build invite / try-again button
@@ -148,6 +151,26 @@ async def start(client, message):
                             url=await get_token(client, message.from_user.id, f"https://t.me/{temp.U_NAME}?start="))]]
                         await message.reply_text(script.VERIFY_REQUIRED_TEXT, reply_markup=InlineKeyboardMarkup(btn))
                         return
+                    
+
+                            # Handle text messages
+                if not orig_msg.media:
+                    # Send text message directly
+                    sent_msg = await client.send_message(
+                        chat_id=message.from_user.id,
+                        text=orig_msg.text,
+                        disable_web_page_preview=True
+                    )
+                    
+                    # Auto-delete logic for text
+                    if AUTO_DELETE_TIME > 0:
+                        deleter_msg = await message.reply_text(
+                            script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN=AUTO_DELETE_TIME)
+                        )
+                        await asyncio.sleep(AUTO_DELETE_TIME * 60)
+                        await sent_msg.delete()
+                        await deleter_msg.edit_text(script.FILE_DELETED_MSG)
+                    return    
 
                 # Get media information safely
                 media = getattr(orig_msg, orig_msg.media.value)
