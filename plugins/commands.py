@@ -138,14 +138,15 @@ async def start(client, message):
                 file_size = media.file_size
                 file_name = getattr(media, "file_name", "File")
 
-                # Prepare caption
-                f_caption = getattr(orig_msg, "caption", "")
+            # Prepare caption
+            f_caption = getattr(orig_msg, "caption", None)  # Get the original caption if it exists, otherwise None
+            if not f_caption:  # If the original caption is None or empty
                 try:
                     if CUSTOM_FILE_CAPTION:
                         f_caption = CUSTOM_FILE_CAPTION.format(
                             file_name=file_name,
                             file_size=get_size(file_size),
-                            file_caption=f_caption
+                            file_caption=""
                         )
                 except Exception as e:
                     print(f"Caption Formatting Error: {e}")
@@ -174,11 +175,10 @@ async def start(client, message):
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:
-                    btn = [[InlineKeyboardButton("✅ ɢᴇᴛ ғɪʟᴇ ᴀɢᴀɪɴ ✅", callback_data=f'del#{file_id}')]]
                     deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN))
                     await asyncio.sleep(AUTO_DELETE_TIME)
                     await sent_msg.delete()
-                    await deleter_msg.edit_text(script.FILE_DELETED_MSG, reply_markup=InlineKeyboardMarkup(btn))
+                    await deleter_msg.edit_text(script.FILE_DELETED_MSG)
                     
                 return
 
