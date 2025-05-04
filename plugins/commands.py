@@ -224,9 +224,9 @@ async def start(client, message):
         except (binascii.Error, ValueError) as e:
             # Not a valid Base64 URL, continue to other handlers
             pass
-        except Exception as e:
-            await message.reply_text(f"Error processing request: {str(e)}")
-            return
+        # except Exception as e:
+        #     await message.reply_text(f"Error processing request: {str(e)}")
+        #     return
 
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
