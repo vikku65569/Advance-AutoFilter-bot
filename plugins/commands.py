@@ -105,62 +105,34 @@ async def start(client, message):
         return
 
     # New Base64 URL Handling ==============================================
-    data = message.command[1]
+    if len(message.command) == 2:
+        data = message.command[1]
+        # 1) Try new Base64 “file_<db_message_id>” deep‐link first
+        try:
+            # pad to multiple of 4
+            padded = data + "=" * ((4 - len(data) % 4) % 4)
+            decoded = base64.urlsafe_b64decode(padded).decode("ascii")
+            prefix, db_message_id = decoded.split("_", 1)
+            if prefix == "file":
+                # fetch the stored message from your DB_CHANNEL
+                orig = await client.get_messages(DB_CHANNEL, int(db_message_id))
+                # copy it into the user chat
+                return await orig.copy(chat_id=message.from_user.id)
+        except (binascii.Error, ValueError):
+            # not a valid Base64 “file_…” link → fall through
+            pass
 
-    try:
-        # Attempt to decode as base64 first
-        decoded = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode(
-            "ascii"
-        )
-        if decoded.startswith("file_"):
-            _, db_message_id = decoded.split("_", 1)
-        orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
+        # 2) Old-style `files_<telegram_file_id>` links
+        if data.startswith("files_"):
+            telegram_file_id = data.split("_", 1)[1]
+            # You probably want to re-use your existing `send_cached_media` logic here:
+            return await client.send_cached_media(
+                chat_id=message.from_user.id,
+                file_id=telegram_file_id,
+                protect_content=False  # or True, whatever your default is
+               )
 
-        # Apply existing security checks
-        if not await db.has_premium_access(message.from_user.id):
-            if not await db.has_premium_access(message.from_user.id):
-                if not await check_verification(client, message.from_user.id) and VERIFY == True:
-                    btn = [[
-                        InlineKeyboardButton("ᴠᴇʀɪғʏ", url=await get_token(client, message.from_user.id, f"https://telegram.me/{temp.U_NAME}?start="))
-                    ],[
-                        InlineKeyboardButton("ʜᴏᴡ ᴛᴏ ᴠᴇʀɪғʏ", url=VERIFY_TUTORIAL)
-                    ]]
-                    text = "<b>ʜᴇʏ {} 👋,\n\nʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴠᴇʀɪғɪᴇᴅ ᴛᴏᴅᴀʏ, ᴘʟᴇᴀꜱᴇ ᴄʟɪᴄᴋ ᴏɴ ᴠᴇʀɪғʏ & ɢᴇᴛ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇꜱꜱ ғᴏʀ ᴛᴏᴅᴀʏ</b>"
-                    if PREMIUM_AND_REFERAL_MODE == True:
-                        text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"
-                    await message.reply_text(
-                        text=text.format(message.from_user.mention),
-                        protect_content=True,
-                        reply_markup=InlineKeyboardMarkup(btn)
-                    )
-                    return
 
-            # Use existing file sending logic
-            if orig_msg.media:
-                # ... [existing media handling with caption formatting] ...
-                msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
-                    file_id=orig_msg.file_id,
-                    caption=f_caption,
-                    protect_content=True,
-                    reply_markup=reply_markup,
-                )
-            else:
-                await orig_msg.copy(chat_id=message.from_user.id)
-
-            # Apply existing auto-delete logic
-            k = await message.reply_text(script.AUTO_DELETE_MSG)
-            await asyncio.sleep(AUTO_DELETE_TIME)
-            await msg.delete()
-            await k.edit_text(script.FILE_DELETED_MSG)
-            return
-
-    except (binascii.Error, ValueError, AttributeError):
-        # Not a base64 URL, continue with other handlers
-        pass
-    except Exception as e:
-        await message.reply_text(f"Error processing request: {str(e)}")
-        return
 
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
