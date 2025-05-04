@@ -178,7 +178,7 @@ async def start(client, message):
                     deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN))
                     await asyncio.sleep(AUTO_DELETE_TIME)
                     await sent_msg.delete()
-                    await deleter_msg.edit_text(script.FILE_DELETED_MSG), reply_markup=InlineKeyboardMarkup(btn)
+                    await deleter_msg.edit_text(script.FILE_DELETED_MSG, reply_markup=InlineKeyboardMarkup(btn))
                     
                 return
 
