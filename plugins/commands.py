@@ -138,15 +138,14 @@ async def start(client, message):
                 file_size = media.file_size
                 file_name = getattr(media, "file_name", "File")
 
-            # Prepare caption
-            f_caption = getattr(orig_msg, "caption", None)  # Get the original caption if it exists, otherwise None
-            if not f_caption:  # If the original caption is None or empty
+                # Prepare caption
+                f_caption = getattr(orig_msg, "caption", "")
                 try:
                     if CUSTOM_FILE_CAPTION:
                         f_caption = CUSTOM_FILE_CAPTION.format(
                             file_name=file_name,
                             file_size=get_size(file_size),
-                            file_caption=""
+                            file_caption=f_caption
                         )
                 except Exception as e:
                     print(f"Caption Formatting Error: {e}")
