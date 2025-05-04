@@ -116,47 +116,44 @@ async def start(client, message):
                 _, db_message_id = decoded.split("_", 1)
                 orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
                 
-                # Security checks
-                if not orig_msg:
-                    return await message.reply("❌ File not found in database")
+                # Check if message contains media
+                if not orig_msg or not orig_msg.media:
+                    return await message.reply("❌ Invalid file message in database")
 
-                # Force subscription check
+                # Security checks
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
                     return  # Handled by existing force sub logic
 
                 # Verification check
                 if not await db.has_premium_access(message.from_user.id):
                     if not await check_verification(client, message.from_user.id) and VERIFY:
-                        btn = [[
-                            InlineKeyboardButton("Verify Now", 
-                            url=await get_token(client, message.from_user.id, f"https://t.me/{temp.U_NAME}?start="))
-                        ]]
-                        await message.reply_text(
-                            script.VERIFY_REQUIRED_TEXT,
-                            reply_markup=InlineKeyboardMarkup(btn)
-                            )
+                        btn = [[InlineKeyboardButton("Verify Now", 
+                            url=await get_token(client, message.from_user.id, f"https://t.me/{temp.U_NAME}?start="))]]
+                        await message.reply_text(script.VERIFY_REQUIRED_TEXT, reply_markup=InlineKeyboardMarkup(btn))
                         return
 
+                # Get media information safely
+                media = getattr(orig_msg, orig_msg.media.value)
+                file_id = media.file_id
+                file_size = media.file_size
+                file_name = getattr(media, "file_name", "File")
+
                 # Prepare caption
-                f_caption = ""
-                file_name = getattr(orig_msg, 'file_name', 'File')
-                if orig_msg.caption:
-                    f_caption = orig_msg.caption
-                
+                f_caption = getattr(orig_msg, "caption", "")
                 try:
                     if CUSTOM_FILE_CAPTION:
                         f_caption = CUSTOM_FILE_CAPTION.format(
                             file_name=file_name,
-                            file_size=get_size(orig_msg.file_size),
+                            file_size=get_size(file_size),
                             file_caption=f_caption
                         )
                 except Exception as e:
-                    print(f"Caption Error: {e}")
+                    print(f"Caption Formatting Error: {e}")
 
                 # Stream mode handling
                 reply_markup = None
-                if STREAM_MODE and orig_msg.media:
-                    log_msg = await client.send_cached_media(LOG_CHANNEL, orig_msg.file_id)
+                if STREAM_MODE:
+                    log_msg = await client.send_cached_media(LOG_CHANNEL, file_id)
                     stream_link = f"{URL}watch/{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
                     download_link = f"{URL}{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
                     
@@ -169,7 +166,7 @@ async def start(client, message):
                 # Send media with auto-delete
                 sent_msg = await client.send_cached_media(
                     chat_id=message.from_user.id,
-                    file_id=orig_msg.file_id,
+                    file_id=file_id,
                     caption=f_caption,
                     protect_content=True,
                     reply_markup=reply_markup
@@ -190,7 +187,6 @@ async def start(client, message):
         except Exception as e:
             await message.reply_text(f"Error processing request: {str(e)}")
             return
-
 
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
