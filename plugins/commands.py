@@ -115,10 +115,6 @@ async def start(client, message):
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
                 orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
-                
-                # Check if message contains media
-                if not orig_msg or not orig_msg.media:
-                    return await message.reply("❌ Invalid file message in database")
 
                 # === FORCE SUBSCRIBE CHECK ===
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
