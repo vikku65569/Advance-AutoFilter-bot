@@ -105,72 +105,24 @@ async def start(client, message):
         return
 
     # New Base64 URL Handling ==============================================
-    data = message.command[1]
+    if len(message.command) == 2:
+        data = message.command[1]
+        # 1) Try new Base64 “file_<db_message_id>” deep‐link first
+        try:
+            # pad to multiple of 4
+            padded = data + "=" * ((4 - len(data) % 4) % 4)
+            decoded = base64.urlsafe_b64decode(padded).decode("ascii")
+            prefix, db_message_id = decoded.split("_", 1)
+            if prefix == "file":
+                # fetch the stored message from your DB_CHANNEL
+                orig = await client.get_messages(DB_CHANNEL, int(db_message_id))
+                # copy it into the user chat
+                return await orig.copy(chat_id=message.from_user.id)
+        except (binascii.Error, ValueError):
+            # not a valid Base64 “file_…” link → fall through
+            pass
 
-    try:
-        # Attempt to decode as base64 first
-        decoded = base64.urlsafe_b64decode(data + "=" * (-len(data) % 4)).decode(
-            "ascii"
-        )
-        if decoded.startswith("file_"):
-            _, db_message_id = decoded.split("_", 1)
-            orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
 
-            # Handle case where message not found
-            if not orig_msg:
-                raise ValueError("File not found in database channel")
-
-            # Security checks
-            if not await db.has_premium_access(message.from_user.id):
-                if (
-                    not await check_verification(client, message.from_user.id)
-                    and VERIFY
-                ):
-                    btn = [[...]]  # Your verification button
-                    text = script.VERIFY_REQUIRED_TEXT
-                    await message.reply_text(
-                        text, reply_markup=InlineKeyboardMarkup(btn)
-                    )
-                    return
-
-            # Prepare caption
-            f_caption = ""
-            if orig_msg.caption:
-                f_caption = orig_msg.caption
-            if CUSTOM_FILE_CAPTION:
-                try:
-                    f_caption = CUSTOM_FILE_CAPTION.format(..., orig_msg.caption)
-                except Exception as e:
-                    print(f"Caption Error: {e}")
-
-            # Send file
-            if orig_msg.media:
-                msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
-                    file_id=orig_msg.file_id,
-                    caption=f_caption,
-                    protect_content=True,
-                    reply_markup=reply_markup,  # Add your markup if needed
-                )
-            else:
-                msg = await orig_msg.copy(chat_id=message.from_user.id)
-
-            # Auto-delete logic
-            k = await message.reply_text(script.AUTO_DELETE_MSG)
-            await asyncio.sleep(AUTO_DELETE_TIME)
-            await msg.delete()
-            await k.edit_text(script.FILE_DELETED_MSG)
-            return
-
-    except (binascii.Error, ValueError) as e:
-        # Not a valid Base64 file_ URL, continue with other handlers
-        pass
-    except Exception as e:
-        await message.reply_text(f"Error processing request: {str(e)}")
-        return
-
-    # Existing URL Handlers ===============================================
-    # (Keep your existing handlers for ZHD, BATCH, DSTORE, files_, etc. unchanged below)
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
             if REQUEST_TO_JOIN_MODE == True:
