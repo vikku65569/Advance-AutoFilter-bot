@@ -25,23 +25,19 @@ lock = asyncio.Lock()
 
 def get_file_type(filename: str) -> str:
     valid_extensions = {
-        'PDF', 'EPUB', 'MP3', 'DOC', 'DOCX', 'JPG', 'JPEG', 
-        'PNG', 'GIF', 'MP4', 'M4A', '3GP', 'MKV', 'WEBM', 
+        'PDF', 'EPUB', 'MP3', 'DOC', 'DOCX', 'JPG', 'JPEG',
+        'PNG', 'GIF', 'MP4', 'M4A', '3GP', 'MKV', 'WEBM',
         'ZIP', 'RAR', '7Z'
     }
-    
-    # Clean filename: remove special chars and convert to uppercase
-    cleaned = ''.join(filter(str.isalnum, filename.upper()))
-    
-    # 1. Check for exact match first
-    if cleaned in valid_extensions:
-        return cleaned
-    
-    # 2. Check for partial matches (longest extensions first)
+
+    # Clean filename: convert to uppercase
+    cleaned = filename.upper()
+
+    # Check if the cleaned filename ends with any of the valid extensions (longest first)
     for ext in sorted(valid_extensions, key=lambda x: -len(x)):
-        if cleaned.startswith(ext):
+        if cleaned.endswith(ext):
             return ext
-    
+
     return 'FILE'
 
 
