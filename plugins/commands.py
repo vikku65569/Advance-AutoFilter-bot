@@ -114,7 +114,11 @@ async def start(client, message):
             
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
-                orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
+                try:
+                    orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
+                except:
+                    # If not found in the primary DB_CHANNEL, check the secondary DB_CHANNEL
+                    orig_msg = await client.get_messages(SECONDARY_DB_CHANNEL, int(db_message_id))
                 
                 if not orig_msg:
                     return await message.reply("❌ File not found in database")
