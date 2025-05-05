@@ -238,7 +238,7 @@ def get_size(size):
         size /= 1024.0
     return "%.2f %s" % (size, units[i])
 
-def file_type(msg: Message):
+def get_file_type(msg: Message):
     if msg.media:
         for message_type in (
             "photo",
