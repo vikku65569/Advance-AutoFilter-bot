@@ -61,21 +61,25 @@ async def gen_link_s(bot, message):
         string = f"file_{file_id}"
         outstr = base64.urlsafe_b64encode(string.encode()).decode().strip("=")
         
-        # Generate share link
+        tg_link    = f"https://t.me/{username}?start={outstr}"
         if WEBSITE_URL_MODE:
-            share_link = f"{WEBSITE_URL}?Zahid={outstr}"
+            web_link = f"{WEBSITE_URL}?wisionx={outstr}"
+            # Send both links
+            await message.reply_text(
+                "**Here's Your Share Links:**\n"
+                f"• Telegram Deep-Link:\n  {tg_link}\n\n"
+                f"• Web-Shortcut Link:\n  {web_link}"
+            )
         else:
-            share_link = f"https://t.me/{username}?start={outstr}"
-        
-        # Send link to user
-        await message.reply_text(f"**Here's Your Share Link:**\n{share_link}")
-        
+            # Fallback to only Telegram link
+            await message.reply_text(f"**Here's Your Share Link:**\n{tg_link}")
         # Enhanced logging
+
         log_text = f"""
         🆔 User ID: {message.from_user.id}
         👤 Username: @{message.from_user.username}
         📄 File ID: {post.id}
-        🔗 Generated Link: {share_link}
+        🔗 Generated Link: {tg_link}
         🔖 Command Used: /link"""
         await bot.send_message(LOG_CHANNEL, log_text)
 
