@@ -74,12 +74,7 @@ async def gen_link_s(bot, message):
             await message.reply_text(f"**Here's Your Share Link:**\n{tg_link}")
         # Enhanced logging
 
-        log_text = f"""
-        🆔 User ID: {message.from_user.id}
-        👤 Username: @{message.from_user.username}
-        📄 File ID: {post.id}
-        🔗 Generated Link: {tg_link}
-        🔖 Command Used: /link"""
+        log_text = f"""Boss User 👤 Username: @{message.from_user.username} Requested📄 File ID: {post.id} via🔗 Generated Link: {tg_link}"""
         await bot.send_message(LOG_CHANNEL, log_text)
 
     except Exception as e:
