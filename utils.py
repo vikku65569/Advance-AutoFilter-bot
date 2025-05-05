@@ -238,6 +238,23 @@ def get_size(size):
         size /= 1024.0
     return "%.2f %s" % (size, units[i])
 
+def file_type(msg: Message):
+    if msg.media:
+        for message_type in (
+            "photo",
+            "animation", 
+            "audio",
+            "document",
+            "video",
+            "video_note",
+            "voice",
+            "sticker"
+        ):
+            obj = getattr(msg, message_type)
+            if obj:
+                return message_type
+    return None
+
 def split_list(l, n):
     for i in range(0, len(l), n):
         yield l[i:i + n]  
