@@ -212,14 +212,13 @@ async def start(client, message):
                         [InlineKeyboardButton("Web Player", web_app=WebAppInfo(url=stream_link))]
                     ])
 
-                # Send media with auto-delete
-                sent_msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
-                    file_id=file_id,
-                    caption=f_caption,
-                    protect_content=True,
-                    reply_markup=reply_markup
-                )
+                if not orig_msg.media and getattr(orig_msg, "text", None):
+                    # Send text message directly
+                    sent_msg = await client.send_message(
+                        chat_id=message.from_user.id,
+                        text=orig_msg.text,
+                        disable_web_page_preview=True
+                    )
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:
