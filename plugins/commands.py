@@ -114,11 +114,7 @@ async def start(client, message):
             
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
-                try:
-                    orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
-                except:
-                    # If not found in the primary DB_CHANNEL, check the secondary DB_CHANNEL
-                    orig_msg = await client.get_messages(SECONDARY_DB_CHANNEL, int(db_message_id))
+                orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
                 
                 if not orig_msg:
                     return await message.reply("❌ File not found in database")
@@ -157,24 +153,24 @@ async def start(client, message):
                         return
                     
 
-                #             # Handle text messages
-                # if not orig_msg.media:
-                #     # Send text message directly
-                #     sent_msg = await client.send_message(
-                #         chat_id=message.from_user.id,
-                #         text=orig_msg.text,
-                #         disable_web_page_preview=True
-                #     )
+                            # Handle text messages
+                if not orig_msg.media:
+                    # Send text message directly
+                    sent_msg = await client.send_message(
+                        chat_id=message.from_user.id,
+                        text=orig_msg.text,
+                        disable_web_page_preview=True
+                    )
                     
-                #     # Auto-delete logic for text
-                #     if AUTO_DELETE_TIME > 0:
-                #         deleter_msg = await message.reply_text(
-                #             script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN=AUTO_DELETE_TIME)
-                #         )
-                #         await asyncio.sleep(AUTO_DELETE_TIME * 60)
-                #         await sent_msg.delete()
-                #         await deleter_msg.edit_text(script.FILE_DELETED_MSG)
-                #     return    
+                    # Auto-delete logic for text
+                    if AUTO_DELETE_TIME > 0:
+                        deleter_msg = await message.reply_text(
+                            script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN=AUTO_DELETE_TIME)
+                        )
+                        await asyncio.sleep(AUTO_DELETE_TIME * 60)
+                        await sent_msg.delete()
+                        await deleter_msg.edit_text(script.FILE_DELETED_MSG)
+                    return    
 
                 # Get media information safely
                 media = getattr(orig_msg, orig_msg.media.value)
