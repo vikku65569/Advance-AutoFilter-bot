@@ -53,7 +53,6 @@ async def gen_link_s(bot, message):
         
         if not replied:
             return await message.reply("❌ Please reply to a file to generate link")
-            
         # Copy to DB channel with logging
         post = await replied.copy(DB_CHANNEL)
         
