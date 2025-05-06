@@ -104,7 +104,6 @@ async def start(client, message):
         )
         return
     # ==============================================
-
         # New Base64 URL Handling ==============================================
     if len(message.command) == 2:
         data = message.command[1]
