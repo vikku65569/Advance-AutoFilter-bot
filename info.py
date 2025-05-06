@@ -121,7 +121,7 @@ USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
 
 # Token Verification Info :
 VERIFY = bool(environ.get('VERIFY', True))
-VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', 'https://gklinks.in/api')
+VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', 'gklinks.in')
 VERIFY_SHORTLINK_API = environ.get('VERIFY_SHORTLINK_API', 'c075e3bf3c1ab31bc3c0cfd2db318ab0a2ea9323')
 VERIFY_TUTORIAL = environ.get('VERIFY_TUTORIAL', '')
 
@@ -134,7 +134,7 @@ VERIFY_SND_SHORTLINK_API = environ.get('VERIFY_SND_SHORTLINK_API', '')
 
 # Shortlink Info
 SHORTLINK_MODE = bool(environ.get('SHORTLINK_MODE', True)) # Set True Or False
-SHORTLINK_URL = environ.get('SHORTLINK_URL', 'https://gklinks.in/api')
+SHORTLINK_URL = environ.get('SHORTLINK_URL', 'gklinks.in')
 SHORTLINK_API = environ.get('SHORTLINK_API', 'c075e3bf3c1ab31bc3c0cfd2db318ab0a2ea9323')
 TUTORIAL = environ.get('TUTORIAL', '') # How Open Shortner Link Video Link , Channel Link Where You Upload Your Video.
 
