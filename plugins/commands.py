@@ -114,10 +114,14 @@ async def start(client, message):
             
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
+                 # Try primary database channel first
                 orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
-                
-                if not orig_msg:
-                    return await message.reply("❌ File not found in database")
+
+                # If not found, empty, or not the right type, fall back to secondary DB channel
+                if not orig_msg or (hasattr(orig_msg, "empty") and orig_msg.empty) or (not orig_msg.media and not getattr(orig_msg, "text", None)):
+                    orig_msg = await client.get_messages(SECONDARY_DB_CHANNEL, int(db_message_id))
+                    if not orig_msg or (hasattr(orig_msg, "empty") and orig_msg.empty):
+                        return await message.reply("❌ File not found in any database")
             
                 # === FORCE SUBSCRIBE CHECK ===
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
