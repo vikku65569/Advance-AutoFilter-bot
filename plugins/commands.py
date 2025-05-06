@@ -103,8 +103,8 @@ async def start(client, message):
             parse_mode=enums.ParseMode.HTML
         )
         return
-
-    # New Base64 URL Handling ==============================================
+    
+        # New Base64 URL Handling ==============================================
     if len(message.command) == 2:
         data = message.command[1]
         try:
@@ -122,9 +122,16 @@ async def start(client, message):
                     orig_msg = await client.get_messages(SECONDARY_DB_CHANNEL, int(db_message_id))
 
                 # Additional verification for valid content
-                if not orig_msg or (not orig_msg.media and not orig_msg.text):
+                if not orig_msg:
+                    return await message.reply("❌ File not found in database")
+                
+                # Check if message contains either valid media or text
+                has_media = orig_msg.media is not None and orig_msg.media != enums.MessageMediaType.UNKNOWN
+                has_text = orig_msg.text is not None and orig_msg.text.strip() != ''
+                
+                if not (has_media or has_text):
                     return await message.reply("❌ Invalid file/message format in database")
-            
+
                 # === FORCE SUBSCRIBE CHECK ===
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
                     # build invite / try-again button
@@ -157,70 +164,78 @@ async def start(client, message):
                             url=await get_token(client, message.from_user.id, f"https://t.me/{temp.U_NAME}?start="))]]
                         await message.reply_text(script.VERIFY_REQUIRED_TEXT, reply_markup=InlineKeyboardMarkup(btn))
                         return
-                    
+                
+                # Handle different message types
+                if has_media:
+                    # Handle media messages
+                    media_type = orig_msg.media
+                    media = getattr(orig_msg, media_type.value)
+                    file_id = media.file_id
+                    file_name = getattr(media, "file_name", "File")
+                    mime_type = getattr(media, "mime_type", "unknown/unknown")
 
-                            # Handle text messages
-                                # Handle text messages
-                if not orig_msg.media:
-                    # Verify text exists and is not empty
+                    # Prepare caption
+                    f_caption = getattr(orig_msg, "caption", "")
+                    try:
+                        if CUSTOM_FILE_CAPTION:
+                            f_caption = CUSTOM_FILE_CAPTION.format(
+                                file_name=file_name,
+                                file_size=get_size(media.file_size),
+                                file_caption=f_caption
+                            )
+                    except Exception as e:
+                        print(f"Caption Formatting Error: {e}")
+
+                    # Stream mode handling
+                    reply_markup = None
+                    if STREAM_MODE and media_type != enums.MessageMediaType.VOICE:
+                        log_msg = await client.send_cached_media(LOG_CHANNEL, file_id)
+                        stream_link = f"{URL}watch/{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
+                        download_link = f"{URL}{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
+                        
+                        reply_markup = InlineKeyboardMarkup([
+                            [InlineKeyboardButton("Download", url=download_link),
+                            InlineKeyboardButton("Stream", url=stream_link)],
+                            [InlineKeyboardButton("Web Player", web_app=WebAppInfo(url=stream_link))]
+                        ])
+
+                    # Send media based on type
+                    try:
+                        if media_type == enums.MessageMediaType.VOICE:
+                            sent_msg = await message.reply_voice(
+                                voice=file_id,
+                                caption=f_caption,
+                                reply_markup=reply_markup
+                            )
+                        else:
+                            sent_msg = await client.send_cached_media(
+                                chat_id=message.from_user.id,
+                                file_id=file_id,
+                                caption=f_caption,
+                                protect_content=True,
+                                reply_markup=reply_markup
+                            )
+                    except Exception as e:
+                        return await message.reply(f"❌ Failed to send media: {str(e)}")
+
+                else:
+                    # Handle text messages
                     if not orig_msg.text or not orig_msg.text.strip():
                         return await message.reply("❌ Empty text message found in database")
                     
-                    # Send text message with safety checks
                     try:
                         sent_msg = await client.send_message(
                             chat_id=message.from_user.id,
-                            text=orig_msg.text.strip(),  # Remove leading/trailing whitespace
+                            text=orig_msg.text.strip(),
                             disable_web_page_preview=True
                         )
                     except Exception as e:
-                        await message.reply(f"❌ Failed to send message: {str(e)}")
-                        return
-                    
-                # Get media information safely
-                media = getattr(orig_msg, orig_msg.media.value)
-                file_id = media.file_id
-                file_size = media.file_size
-                file_name = getattr(media, "file_name", "File")
-
-                # Prepare caption
-                f_caption = getattr(orig_msg, "caption", "")
-                try:
-                    if CUSTOM_FILE_CAPTION:
-                        f_caption = CUSTOM_FILE_CAPTION.format(
-                            file_name=file_name,
-                            file_size=get_size(file_size),
-                            file_caption=f_caption
-                        )
-                except Exception as e:
-                    print(f"Caption Formatting Error: {e}")
-
-                # Stream mode handling
-                reply_markup = None
-                if STREAM_MODE:
-                    log_msg = await client.send_cached_media(LOG_CHANNEL, file_id)
-                    stream_link = f"{URL}watch/{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
-                    download_link = f"{URL}{log_msg.id}/{quote_plus(file_name)}?hash={get_hash(log_msg)}"
-                    
-                    reply_markup = InlineKeyboardMarkup([
-                        [InlineKeyboardButton("Download", url=download_link),
-                         InlineKeyboardButton("Stream", url=stream_link)],
-                        [InlineKeyboardButton("Web Player", web_app=WebAppInfo(url=stream_link))]
-                    ])
-
-                # Send media with auto-delete
-                sent_msg = await client.send_cached_media(
-                    chat_id=message.from_user.id,
-                    file_id=file_id,
-                    caption=f_caption,
-                    protect_content=True,
-                    reply_markup=reply_markup
-                )
+                        return await message.reply(f"❌ Failed to send message: {str(e)}")
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:
                     deleter_msg = await message.reply_text(script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN))
-                    await asyncio.sleep(AUTO_DELETE_TIME)
+                    await asyncio.sleep(AUTO_DELETE_TIME * 60)
                     await sent_msg.delete()
                     await deleter_msg.edit_text(script.FILE_DELETED_MSG)
                     
@@ -229,9 +244,8 @@ async def start(client, message):
         except (binascii.Error, ValueError) as e:
             # Not a valid Base64 URL, continue to other handlers
             pass
-        # except Exception as e:
-        #     await message.reply_text(f"Error processing request: {str(e)}")
-        #     return
+    
+
 
     if AUTH_CHANNEL and not await is_subscribed(client, message):
         try:
