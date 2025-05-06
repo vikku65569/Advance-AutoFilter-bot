@@ -114,7 +114,6 @@ async def start(client, message):
             
             if decoded.startswith("file_"):
                 _, db_message_id = decoded.split("_", 1)
-
                 # Try primary channel first
                 orig_msg = await client.get_messages(DB_CHANNEL, int(db_message_id))
 
@@ -122,8 +121,9 @@ async def start(client, message):
                 if not orig_msg:
                     orig_msg = await client.get_messages(SECONDARY_DB_CHANNEL, int(db_message_id))
 
-                if not orig_msg:
-                    return await message.reply("❌ File not found in database")
+                # Additional verification for valid content
+                if not orig_msg or (not orig_msg.media and not orig_msg.text):
+                    return await message.reply("❌ Invalid file/message format in database")
             
                 # === FORCE SUBSCRIBE CHECK ===
                 if AUTH_CHANNEL and not await is_subscribed(client, message):
@@ -160,24 +160,23 @@ async def start(client, message):
                     
 
                             # Handle text messages
+                                # Handle text messages
                 if not orig_msg.media:
-                    # Send text message directly
-                    sent_msg = await client.send_message(
-                        chat_id=message.from_user.id,
-                        text=orig_msg.text,
-                        disable_web_page_preview=True
-                    )
+                    # Verify text exists and is not empty
+                    if not orig_msg.text or not orig_msg.text.strip():
+                        return await message.reply("❌ Empty text message found in database")
                     
-                    # Auto-delete logic for text
-                    if AUTO_DELETE_TIME > 0:
-                        deleter_msg = await message.reply_text(
-                            script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN=AUTO_DELETE_TIME)
+                    # Send text message with safety checks
+                    try:
+                        sent_msg = await client.send_message(
+                            chat_id=message.from_user.id,
+                            text=orig_msg.text.strip(),  # Remove leading/trailing whitespace
+                            disable_web_page_preview=True
                         )
-                        await asyncio.sleep(AUTO_DELETE_TIME * 60)
-                        await sent_msg.delete()
-                        await deleter_msg.edit_text(script.FILE_DELETED_MSG)
-                    return    
-
+                    except Exception as e:
+                        await message.reply(f"❌ Failed to send message: {str(e)}")
+                        return
+                    
                 # Get media information safely
                 media = getattr(orig_msg, orig_msg.media.value)
                 file_id = media.file_id
