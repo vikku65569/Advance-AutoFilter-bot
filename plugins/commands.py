@@ -39,7 +39,7 @@ async def start(client, message):
         # ],
 
         [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
         ],
         [
             InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
@@ -64,7 +64,7 @@ async def start(client, message):
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
             [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
                 InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
@@ -85,7 +85,7 @@ async def start(client, message):
         else:
             buttons = [
             [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
 
             [
@@ -292,7 +292,7 @@ async def start(client, message):
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
             [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
                 InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
@@ -313,7 +313,7 @@ async def start(client, message):
         else:
             buttons = [
               [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],    
             [
                 InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
@@ -360,7 +360,7 @@ async def start(client, message):
             if PREMIUM_AND_REFERAL_MODE == True:
                 buttons = [
                   [
-            InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+            InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],    
                 [
                     InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
@@ -381,7 +381,7 @@ async def start(client, message):
             else:
                 buttons = [
                 [
-                     InlineKeyboardButton('⤬ Visit : Wisionx ⤬', url=f'https://wisionx.com')
+                     InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],
                 [
                     InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
