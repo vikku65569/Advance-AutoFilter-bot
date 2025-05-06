@@ -1,7 +1,7 @@
 
 
 class script(object):
-    START_TXT = """<b><blockquote>ʜᴇʟʟᴏ {} 👋,</blockquote>
+    START_TXT = """<b><blockquote>𝐆𝐫𝐞𝐞𝐭𝐢𝐧𝐠𝐬 {} 👋Wᴇʟᴇᴄᴏᴍᴇ ᴛᴏ Tʜᴇ WɪsɪᴏɴX Aʀᴄʜɪᴠᴇ,Oɴ ᴅᴇᴍᴀɴᴅ ʟɪʙʀᴀʀʏ ɪɴ ᴡʜᴏʟᴇ Tᴇʟᴇɢʀᴀᴍ </blockquote>
     
 ɪ ᴀᴍ ʟᴀᴛᴇꜱᴛ ᴀᴅᴠᴀɴᴄᴇᴅ ᴀɴᴅ ᴘᴏᴡᴇʀꜰᴜʟ Rᴇsᴏᴜʀᴄᴇ Aʟᴄʜᴇᴍɪsᴛ Cʀᴇᴀᴛᴇᴅ Fᴏʀ Exᴄᴇʟʟᴇʀᴀᴛɪɴɢ Gʀᴏᴡᴛʜ ᴏғ Mᴀɴᴋɪɴᴅ
 I Cᴀɴ Pʀᴏᴠɪᴅᴇ Yᴏᴜ Wɪᴛʜ Tʜᴇ Bᴏᴏᴋs,Aᴜᴅɪᴏᴏᴋs,Aɴᴅ Usᴇғᴜʟ Rᴇsᴏᴜʀᴄᴇs Yᴏᴜ Nᴇᴇᴅ Tᴏ Gʀᴏᴡ Iɴ Yᴏᴜʀ Lɪғᴇ</b>"""
@@ -23,7 +23,7 @@ I Cᴀɴ Pʀᴏᴠɪᴅᴇ Yᴏᴜ Wɪᴛʜ Tʜᴇ Bᴏᴏᴋs,Aᴜᴅɪᴏᴏ�
 ‣ ʟᴀɴɢᴜᴀɢᴇ : <a href='https://www.python.org/download/releases/3.0/'>ᴘʏᴛʜᴏɴ 3</a> 
 ‣ ᴅᴀᴛᴀ ʙᴀsᴇ : <a href='https://www.mongodb.com/'>ᴍᴏɴɢᴏ ᴅʙ</a> 
 ‣ ʙᴏᴛ sᴇʀᴠᴇʀ : <a href='https://heroku.com'>ʜᴇʀᴏᴋᴜ</a> 
-‣ ʙᴜɪʟᴅ sᴛᴀᴛᴜs : ᴠ2.7.1 [sᴛᴀʙʟᴇ]></b>"""
+‣ ʙᴜɪʟᴅ sᴛᴀᴛᴜs : ᴠ1.0 Stable By Tactition </b>"""
 
     CLONE_ABOUT_TXT = """<b><blockquote>⍟───[ ᴍʏ ᴀʙᴏᴜᴛ ]───⍟</blockquote>
     
