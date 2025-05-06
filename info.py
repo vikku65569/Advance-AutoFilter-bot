@@ -120,7 +120,7 @@ USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', True))
 
 
 # Token Verification Info :
-VERIFY = bool(environ.get('VERIFY', False))
+VERIFY = bool(environ.get('VERIFY',True))
 VERIFY_SHORTLINK_URL = environ.get('VERIFY_SHORTLINK_URL', 'gklinks.in')
 VERIFY_SHORTLINK_API = environ.get('VERIFY_SHORTLINK_API', 'c075e3bf3c1ab31bc3c0cfd2db318ab0a2ea9323')
 VERIFY_TUTORIAL = environ.get('VERIFY_TUTORIAL', '')
