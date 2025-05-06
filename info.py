@@ -49,7 +49,7 @@ SUPPORT_CHAT_ID = int(support_chat_id) if support_chat_id and id_pattern.search(
 # This Channel Is For /batch command file store.
 FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '-1002509332985')).split()]  # For Multiple Id Use One Space Between Each.
 
-DB_CHANNEL = int(environ.get("DB_CHANNEL", "-1002509332985")) #1002509332985
+DB_CHANNEL = int(environ.get("DB_CHANNEL", "-1002509332985")) 
 SECONDARY_DB_CHANNEL = int(environ.get("SECONDARY_DB_CHANNEL", "-1002141494142")) #file chaneel 
 AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "120")) # Time in Seconds
 AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "2")) # Time in Minutes
