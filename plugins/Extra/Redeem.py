@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 import pytz
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from info import ADMINS, LOG_CHANNEL
+from info import ADMINS, LOG_CHANNEL , OWNER_LNK
 from utils import get_seconds
 from database.users_chats_db import db
 import string
@@ -44,8 +44,8 @@ Aᴍᴏᴜɴᴛ:</b> {num_codes}
 
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("♻️ Redeem Here ♻️", url="http://t.me/NehaTestBot")],
-                [InlineKeyboardButton("❕ Any Query ❕", url="https://t.me/IM_JISSHU")]
+                [InlineKeyboardButton("♻️ Redeem Here ♻️", url={num_codes})],
+                [InlineKeyboardButton("❕ Any Query ❕", url=OWNER_LNK)],
             ]
         )
 
@@ -110,4 +110,4 @@ async def redeem_code(client, message):
         else:
             await message.reply_text("Invalid Redeem Code or Expired.")
     else:
-        await message.reply_text("Usage: /redeem <code>")
+        await message.reply_text("Usage: Command format: /add_redeem [time_duration] [number_of_codes] \nExamples: /add_redeem 1min 1, /add_redeem 1hour 10, /add_redeem 1day 5")
