@@ -46,7 +46,7 @@ async def start(client, message):
             InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
             InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋ/Bᴏᴏᴋ ɢʀᴏᴜᴘ', url=GRP_LNK)
         ],[
-            InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK)
+            InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK)
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup, disable_web_page_preview=True)
@@ -68,7 +68,7 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
@@ -90,7 +90,7 @@ async def start(client, message):
             ],
 
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [
@@ -301,12 +301,12 @@ async def start(client, message):
                         btn.append([InlineKeyboardButton("↻ ᴛʀʏ ᴀɢᴀɪɴ", url=f"https://t.me/{temp.U_NAME}?start={message.command[1]}")])
             if REQUEST_TO_JOIN_MODE == True:
                 if TRY_AGAIN_BTN == True:
-                    text = "**🕵️ ʏᴏᴜ ᴅᴏ ɴᴏᴛ ᴊᴏɪɴ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ ᴛʜᴇɴ ᴛʀʏ ᴀɢᴀɪɴ**"
+                    text = "**🕵️ Yᴏᴜ ʜᴀᴠᴇɴ'ᴛ ɪᴏɪɴᴇᴅ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ʏᴇᴛ. Pʟᴇᴀsᴇ ɪᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ, ᴀɴᴅ ᴛʜᴇɴ ᴛʀʏ ᴀɢᴀɪɴ**"
                 else:
                     await db.set_msg_command(message.from_user.id, com=message.command[1])
-                    text = "**🕵️ ʏᴏᴜ ᴅᴏ ɴᴏᴛ ᴊᴏɪɴ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ**"
+                    text = "**🕵️Yᴏᴜ ʜᴀᴠᴇɴ'ᴛ ɪᴏɪɴᴇᴅ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ʏᴇᴛ. Pʟᴇᴀsᴇ ɪᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ, ᴀɴᴅ ᴛʜᴇɴ ᴛʀʏ ᴀɢᴀɪɴ**"
             else:
-                text = "**🕵️ ʏᴏᴜ ᴅᴏ ɴᴏᴛ ᴊᴏɪɴ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ ᴊᴏɪɴ ᴄʜᴀɴɴᴇʟ ᴛʜᴇɴ ᴛʀʏ ᴀɢᴀɪɴ**"
+                text = "**🕵️ Yᴏᴜ ʜᴀᴠᴇɴ'ᴛ ɪᴏɪɴᴇᴅ ᴍʏ ʙᴀᴄᴋᴜᴘ ᴄʜᴀɴɴᴇʟ ʏᴇᴛ. Pʟᴇᴀsᴇ ɪᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ғɪʀsᴛ, ᴀɴᴅ ᴛʜᴇɴ ᴛʀʏ ᴀɢᴀɪɴ**"
             await client.send_message(
                 chat_id=message.from_user.id,
                 text=text,
@@ -325,7 +325,7 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
@@ -346,7 +346,7 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],    
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [
@@ -393,7 +393,7 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],    
                 [
-                    InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                    InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                     InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
                 ],
                 [
@@ -414,7 +414,7 @@ async def start(client, message):
                      InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],
                 [
-                    InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                    InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                     InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
                 ],
                 [

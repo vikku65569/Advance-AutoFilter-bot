@@ -1861,7 +1861,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
@@ -1879,7 +1879,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         else:
             buttons = [
             [
-                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
                 InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [

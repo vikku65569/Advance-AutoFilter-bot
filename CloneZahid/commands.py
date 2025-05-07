@@ -25,7 +25,7 @@ async def start(client, message):
         ]]
         if cd["update_channel_link"] != None:
             up = cd["update_channel_link"]
-            buttons.append([InlineKeyboardButton('🍿 ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)])
+            buttons.append([InlineKeyboardButton('🍿 Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)])
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply(script.CLONE_START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, me.username, me.first_name), reply_markup=reply_markup)
         return 
@@ -40,7 +40,7 @@ async def start(client, message):
         ]]
         if cd["update_channel_link"] != None:
             up = cd["update_channel_link"]
-            buttons.append([InlineKeyboardButton('🍿 ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)])
+            buttons.append([InlineKeyboardButton('🍿 Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)])
         reply_markup = InlineKeyboardMarkup(buttons)
         m=await message.reply_sticker("CAACAgQAAxkBAAIaoGgWMvEPzTg1NCkXrKB3wMqeMb1zAAK0DQACJcrJUeuUvBzWSct5HgQ") 
         await asyncio.sleep(1)
@@ -110,7 +110,7 @@ async def start(client, message):
             if cd["update_channel_link"] != None:
                 up = cd["update_channel_link"]
                 button = [[
-                    InlineKeyboardButton('🍿 ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)
+                    InlineKeyboardButton('🍿 Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)
                 ]]
                 reply_markup=InlineKeyboardMarkup(button)
             else:
@@ -158,7 +158,7 @@ async def start(client, message):
     if cd["update_channel_link"] != None:
         up = cd["update_channel_link"]
         button = [[
-            InlineKeyboardButton('🍿 ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)
+            InlineKeyboardButton('🍿 Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ 🍿', url=up)
         ]]
         reply_markup=InlineKeyboardMarkup(button)
     else:
