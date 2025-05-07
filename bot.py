@@ -74,8 +74,7 @@ async def start():
             print("Make Your Bot Admin In File Channels With Full Rights")
             
     try:
-        j = await ZahidBot.send_message(chat_id=AUTH_CHANNEL, text="**Bot Restarted**")
-        await j.delete()
+        print("Ensure Bot is admin in Auth Channel Otherwise Everyting is Set")
     except:
         print("Make Your Bot Admin In Force Subscribe Channel With Full Rights")
     if CLONE_MODE == True:
