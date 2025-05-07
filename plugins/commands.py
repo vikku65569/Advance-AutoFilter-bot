@@ -1,7 +1,8 @@
 import os, string, logging, random, asyncio, time, datetime, re, sys, json, base64, binascii
+import pytz
 from Script import *
 from pyrogram import Client, filters, enums
-from pyrogram.errors import ChatAdminRequired, FloodWait
+from pyrogram.errors import ChatAdminRequired, FloodWait, MessageTooLong
 from pyrogram.types import *
 from database.ia_filterdb import col, sec_col, get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db, delete_all_referal_users, get_referal_users_count, get_referal_all_users, referal_add_user
@@ -914,6 +915,7 @@ async def delete(bot, message):
         else:
             # files indexed before https://github.com/EvamariaTG/EvaMaria/commit/f3d2a1bcb155faf44178e5d7a685a1b533e714bf#diff-86b613edf1748372103e94cacff3b578b36b698ef9c16817bb98fe9ef22fb669R39 
             # have original file name.
+
             result = col.delete_many({
                 'file_name': media.file_name,
                 'file_size': media.file_size
@@ -1636,3 +1638,48 @@ async def purge_requests(client, message):
             parse_mode=enums.ParseMode.MARKDOWN,
             disable_web_page_preview=True
         )
+
+@Client.on_message(filters.command("premium_users"))
+async def premium_users_info(client, message):
+    user_id = message.from_user.id
+    if user_id not in ADMINS:
+        await message.reply("ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ ᴀɴʏ ᴘᴇʀᴍɪꜱꜱɪᴏɴ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ.")
+        return
+
+    count = await db.all_premium_users()
+    await message.reply(f"👥 ᴛᴏᴛᴀʟ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀꜱ - {count}\n\n<i>ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ, ꜰᴇᴛᴄʜɪɴɢ ꜰᴜʟʟ ɪɴꜰᴏ ᴏꜰ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀꜱ</i>")
+
+    users = await db.get_all_users()
+    new = "📝 <u>ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀꜱ ɪɴꜰᴏʀᴍᴀᴛɪᴏɴ</u> :\n\n"
+    user_count = 1
+    async for user in users:
+        data = await db.get_user(user['id'])
+        if data and data.get("expiry_time"):
+            expiry = data.get("expiry_time")
+            expiry_ist = expiry.astimezone(pytz.timezone("Asia/Kolkata"))
+            current_time = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
+            
+            if current_time > expiry_ist:
+                await db.remove_premium_access(user['id'])  # Remove premium access if expired
+                continue  # Skip the user if their expiry time has passed
+                
+            expiry_str_in_ist = expiry_ist.strftime("%d-%m-%Y")
+            expiry_time_in_ist = expiry_ist.strftime("%I:%M:%S %p")
+            time_left = expiry_ist - current_time
+            
+            days = time_left.days
+            hours, remainder = divmod(time_left.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            time_left_str = f"{days} ᴅᴀʏꜱ, {hours} ʜᴏᴜʀꜱ, {minutes} ᴍɪɴᴜᴛᴇꜱ, {seconds} ꜱᴇᴄᴏɴᴅꜱ"
+            
+            new += f"{user_count}. {(await client.get_users(user['id'])).mention}\n👤 ᴜꜱᴇʀ ɪᴅ : <code>{user['id']}</code>\n⏱️ ᴇxᴘɪʀᴇᴅ ᴅᴀᴛᴇ : {expiry_str_in_ist}\n⏱️ ᴇxᴘɪʀᴇᴅ ᴛɪᴍᴇ : {expiry_time_in_ist}\n⏳ ʀᴇᴍᴀɪɴɪɴɢ ᴛɪᴍᴇ : {time_left_str}\n\n"
+            user_count += 1
+        else:
+            pass
+    
+    try:
+        await message.reply(new)
+    except MessageTooLong:
+        with open('premium_users_info.txt', 'w+') as outfile:
+            outfile.write(new)
+        await message.reply_document('premium_users_info.txt', caption="Premium Users Information:")

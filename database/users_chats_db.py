@@ -248,7 +248,7 @@ class Database:
             else:
                 await self.users.update_one({"id": user_id}, {"$set": {"expiry_time": None}})
         return False
-    
+
     async def check_remaining_uasge(self, userid):
         user_id = userid
         user_data = await self.get_user(user_id)        
