@@ -589,30 +589,45 @@ async def start(client, message):
 
     elif data.split("-", 1)[0] == "verify":
         try:
-            # Your existing verification logic
-            parts = data.split("-")
+            # Split into 3 parts: "verify", userid, token
+            parts = data.split("-", 2)  # Split into max 3 parts
+            if len(parts) != 3:
+                raise ValueError("Invalid verification format")
+            
             userid = parts[1]
             token = parts[2]
             
+            # Validate user match
             if str(message.from_user.id) != str(userid):
-                await message.reply_text("<b>Invalid link</b>", protect_content=True)
-                return  # Stop further processing
+                await message.reply_text("<b>Invalid link or expired link</b>", protect_content=True)
+                return  # Stop execution here
+            
+            # Check token validity
+            if not await check_token(client, userid, token):
+                await message.reply_text("<b>Invalid link or expired link</b>", protect_content=True)
+                return
+            
+            # Verification successful
+            text = (f"<b>ʜᴇʏ {message.from_user.mention} 👋,\n\n"
+                    "ʏᴏᴜ ʜᴀᴠᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ᴛʜᴇ ᴠᴇʀɪꜰɪᴄᴀᴛɪᴏɴ...\n\n"
+                    "ɴᴏᴡ ʏᴏᴜ ʜᴀᴠᴇ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇss ᴛᴏᴅᴀʏ ~ ᴇɴᴊᴏʏ\n\n</b>")
+            
+            if PREMIUM_AND_REFERAL_MODE:
+                text += ("<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n"
+                        "💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>")
+            
+            await message.reply_text(text, protect_content=True)
+            await verify_user(client, userid, token)
+            
+            # CRUCIAL: Prevent further processing
+            return  
 
-            if await check_token(client, userid, token):
-                text = f"<b>Hey {message.from_user.mention} 👋,...</b>"  # Your text
-                await message.reply_text(text, protect_content=True)
-                await verify_user(client, userid, token)
-            else:
-                await message.reply_text("<b>Expired link</b>", protect_content=True)
-            
-            return  # 🔴 CRUCIAL: Exit after verification handling
-            
-        except IndexError:
-            await message.reply_text("<b>Invalid verification format</b>")
+        except (ValueError, IndexError) as e:
+            await message.reply_text("<b>Invalid verification link format</b>", protect_content=True)
             return
-            
         except Exception as e:
             logger.error(f"Verification error: {str(e)}")
+            await message.reply_text("<b>Error processing verification</b>", protect_content=True)
             return
 
     if data.startswith("sendfiles"):
