@@ -1861,8 +1861,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if PREMIUM_AND_REFERAL_MODE == True:
             buttons = [
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -1879,8 +1879,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         else:
             buttons = [
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -1996,8 +1996,8 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
     elif query.data == "about":
         buttons = [[
-            InlineKeyboardButton('𝙗𝙤𝙤𝙠𝙨', url=GRP_LNK),
-            InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇ', url=CHNL_LNK)
+            InlineKeyboardButton('ʙᴏᴏᴋs', url=GRP_LNK),
+            InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=CHNL_LNK)
         ],[
             InlineKeyboardButton('Hᴏᴍᴇ', callback_data='start'),
             InlineKeyboardButton('Cʟᴏsᴇ', callback_data='close_data')

@@ -651,8 +651,8 @@ async def send_all(bot, userid, files, ident, chat_id, user_name, query,message)
                     protect_content=True if ident == "filep" else False,
                     reply_markup=InlineKeyboardMarkup(
                         [[
-                            InlineKeyboardButton('𝙗𝙤𝙤𝙠𝙨', url=GRP_LNK),
-                            InlineKeyboardButton('𝘼𝙪𝙙𝙞𝙤𝙗𝙤𝙤𝙠𝙨', url=CHNL_LNK)
+                            InlineKeyboardButton('ʙᴏᴏᴋs', url=GRP_LNK),
+                            InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs', url=CHNL_LNK)
                         ],[
                             InlineKeyboardButton("Bᴏᴛ Oᴡɴᴇʀ", url=OWNER_LNK)
                         ]]

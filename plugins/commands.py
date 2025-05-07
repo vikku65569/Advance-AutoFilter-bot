@@ -46,7 +46,7 @@ async def start(client, message):
             InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ', url=f'https://t.me/{SUPPORT_CHAT}'),
             InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋ/Bᴏᴏᴋ ɢʀᴏᴜᴘ', url=GRP_LNK)
         ],[
-            InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK)
+            InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK)
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply(script.START_TXT.format(message.from_user.mention if message.from_user else message.chat.title, temp.U_NAME, temp.B_NAME), reply_markup=reply_markup, disable_web_page_preview=True)
@@ -68,8 +68,8 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -90,8 +90,8 @@ async def start(client, message):
             ],
 
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -325,8 +325,8 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
              [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -346,8 +346,8 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
             ],    
             [
-                InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
             ],
             [
                 InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -393,8 +393,8 @@ async def start(client, message):
             InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],    
                 [
-                    InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                    InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                    InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                    InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
                 ],
                 [
                     InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
@@ -414,8 +414,8 @@ async def start(client, message):
                      InlineKeyboardButton('Visit WisionX.com', url=f'https://wisionx.com')
                 ],
                 [
-                    InlineKeyboardButton('ᴊᴏɪɴ ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ', url=CHNL_LNK),
-                    InlineKeyboardButton('Dɪsᴄᴜssɪᴏɴ ɢʀᴏᴜᴘ', url=GRP_LNK)
+                    InlineKeyboardButton('ᴊᴏɪɴ Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                    InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟ', url=GRP_LNK)
                 ],
                 [
                     InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),

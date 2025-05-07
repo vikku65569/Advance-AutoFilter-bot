@@ -37,8 +37,8 @@ async def save_group(bot, message):
             await bot.leave_chat(message.chat.id)
             return
         buttons = [[
-            InlineKeyboardButton('𝙗𝙤𝙤𝙠𝙨', url=f'https://t.me/{SUPPORT_CHAT}'),
-            InlineKeyboardButton('𝘼𝙪𝙙𝙞𝙤𝙗𝙤𝙤𝙠𝙨', url=CHNL_LNK)
+            InlineKeyboardButton('ʙᴏᴏᴋs', url=f'https://t.me/{SUPPORT_CHAT}'),
+            InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs', url=CHNL_LNK)
         ],[
             InlineKeyboardButton("Bᴏᴛ Oᴡɴᴇʀ", url=OWNER_LNK)
         ]]
@@ -57,8 +57,8 @@ async def save_group(bot, message):
                     except:
                         pass
                 button = [[
-                    InlineKeyboardButton('𝙗𝙤𝙤𝙠𝙨', url=f'https://t.me/{SUPPORT_CHAT}'),
-                    InlineKeyboardButton('𝘼𝙪𝙙𝙞𝙤𝙗𝙤𝙤𝙠𝙨', url=CHNL_LNK)
+                    InlineKeyboardButton('ʙᴏᴏᴋs', url=f'https://t.me/{SUPPORT_CHAT}'),
+                    InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs', url=CHNL_LNK)
                 ],[
                     InlineKeyboardButton("Bᴏᴛ Oᴡɴᴇʀ", url=OWNER_LNK)
                 ]]
