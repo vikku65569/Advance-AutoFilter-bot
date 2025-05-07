@@ -588,19 +588,32 @@ async def start(client, message):
         return
 
     elif data.split("-", 1)[0] == "verify":
-        userid = data.split("-", 2)[1]
-        token = data.split("-", 3)[2]
-        if str(message.from_user.id) != str(userid):
-            return await message.reply_text(text="<b>ɪɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ ᴇxᴘɪʀᴇᴅ ʟɪɴᴋ</b>", protect_content=True)
-        is_valid = await check_token(client, userid, token)
-        if is_valid == True:
-            text = "<b>ʜᴇʏ {} 👋,\n\nʏᴏᴜ ʜᴀᴠᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ᴛʜᴇ ᴠᴇʀɪꜰɪᴄᴀᴛɪᴏɴ...\n\nɴᴏᴡ ʏᴏᴜ ʜᴀᴠᴇ ᴜɴʟɪᴍɪᴛᴇᴅ ᴀᴄᴄᴇss ᴛᴏᴅᴀʏ ~ ᴇɴᴊᴏʏ\n\n</b>"
-            if PREMIUM_AND_REFERAL_MODE == True:
-                text += "<b>ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴅɪʀᴇᴄᴛ ғɪʟᴇꜱ ᴡɪᴛʜᴏᴜᴛ ᴀɴʏ ᴠᴇʀɪғɪᴄᴀᴛɪᴏɴꜱ ᴛʜᴇɴ ʙᴜʏ ʙᴏᴛ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ☺️\n\n💶 ꜱᴇɴᴅ /plan ᴛᴏ ʙᴜʏ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ</b>"           
-            await message.reply_text(text=text.format(message.from_user.mention), protect_content=True)
-            await verify_user(client, userid, token)
-        else:
-            return await message.reply_text(text="<b>ɪɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ ᴇxᴘɪʀᴇᴅ ʟɪɴᴋ</b>", protect_content=True)
+        try:
+            # Your existing verification logic
+            parts = data.split("-")
+            userid = parts[1]
+            token = parts[2]
+            
+            if str(message.from_user.id) != str(userid):
+                await message.reply_text("<b>Invalid link</b>", protect_content=True)
+                return  # Stop further processing
+
+            if await check_token(client, userid, token):
+                text = f"<b>Hey {message.from_user.mention} 👋,...</b>"  # Your text
+                await message.reply_text(text, protect_content=True)
+                await verify_user(client, userid, token)
+            else:
+                await message.reply_text("<b>Expired link</b>", protect_content=True)
+            
+            return  # 🔴 CRUCIAL: Exit after verification handling
+            
+        except IndexError:
+            await message.reply_text("<b>Invalid verification format</b>")
+            return
+            
+        except Exception as e:
+            logger.error(f"Verification error: {str(e)}")
+            return
 
     if data.startswith("sendfiles"):
         chat_id = int("-" + file_id.split("-")[1])
