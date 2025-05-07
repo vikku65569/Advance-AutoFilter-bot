@@ -44,8 +44,7 @@ Aᴍᴏᴜɴᴛ:</b> {num_codes}
 
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("♻️ Redeem Here ♻️", url={num_codes})],
-                [InlineKeyboardButton("❕ Any Query ❕", url=OWNER_LNK)],
+                [InlineKeyboardButton("❕ Any Query ❕", url=OWNER_LNK)]
             ]
         )
 
