@@ -12,7 +12,7 @@ from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search
 from database.users_chats_db import db
 from database.ia_filterdb import col, sec_col, db as vjdb, sec_db, get_file_details, get_search_results, get_bad_files
 from database.filters_mdb import del_all, find_filter, get_filters
-from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive,is_connected ,col ,mycol
+from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive,is_connected ,mycol
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from Zahid.util.file_properties import get_name, get_hash, get_media_file_size
