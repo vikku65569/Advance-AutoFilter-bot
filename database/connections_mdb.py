@@ -15,12 +15,15 @@ mycol = mydb['CONNECTION']
 
 def connected_group():
     async def func(_, __, message):
-        group_id = message.chat.id
-        # Check if group exists in any user's connections
+        mycol.create_index("active_group")
+        group_id = str(message.chat.id)  # Convert to string to match DB format
+        # Check if any user has this group as their active group
         return mycol.count_documents(
-            {"group_details.group_id": group_id}
+            {"active_group": group_id}
         ) > 0
     return filters.create(func)
+
+# Create index once during initialization (add this at the bottom of the file)
 
 async def add_connection(group_id, user_id):
     query = mycol.find_one(
