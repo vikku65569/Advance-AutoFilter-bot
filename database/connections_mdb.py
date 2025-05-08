@@ -3,7 +3,7 @@
 import pymongo
 
 from info import OTHER_DB_URI, DATABASE_NAME
-
+from pyrogram import filters
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -11,6 +11,13 @@ logger.setLevel(logging.ERROR)
 myclient = pymongo.MongoClient(OTHER_DB_URI)
 mydb = myclient[DATABASE_NAME]
 mycol = mydb['CONNECTION'] 
+
+def is_connected(_, __, message):
+    group_id = message.chat.id
+    # Check if the group exists in any user's connections
+    return mycol.count_documents({"group_details.group_id": group_id}) > 0
+
+connected_group = filters.create(is_connected)
 
 async def add_connection(group_id, user_id):
     query = mycol.find_one(

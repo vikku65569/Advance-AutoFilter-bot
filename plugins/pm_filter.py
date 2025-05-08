@@ -12,7 +12,7 @@ from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search
 from database.users_chats_db import db
 from database.ia_filterdb import col, sec_col, db as vjdb, sec_db, get_file_details, get_search_results, get_bad_files
 from database.filters_mdb import del_all, find_filter, get_filters
-from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive
+from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive,is_connected ,col ,mycol
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from Zahid.util.file_properties import get_name, get_hash, get_media_file_size
@@ -50,7 +50,14 @@ BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
 
-@Client.on_message(filters.group & filters.text & filters.incoming)
+def is_connected(_, __, message):
+    group_id = message.chat.id
+    # Check if the group exists in any user's connections
+    return mycol.count_documents({"group_details.group_id": group_id}) > 0
+
+connected_group = filters.create(is_connected)
+
+@Client.on_message(filters.group & filters.text & filters.incoming & connected_group)
 async def give_filter(client, message):
     if message.chat.id != SUPPORT_CHAT_ID:
         settings = await get_settings(message.chat.id)
@@ -89,7 +96,8 @@ async def give_filter(client, message):
         if total_results == 0:
             return
         else:
-            return await message.reply_text(f"<b>Hᴇʏ {message.from_user.mention}, {str(total_results)} ʀᴇsᴜʟᴛs ᴀʀᴇ ғᴏᴜɴᴅ ɪɴ ᴍʏ ᴅᴀᴛᴀʙᴀsᴇ ғᴏʀ ʏᴏᴜʀ ᴏ̨ᴜᴇʀʏ {search}. \n\nTʜɪs ɪs ᴀ sᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ sᴏ ᴛʜᴀᴛ ʏᴏᴜ ᴄᴀɴ'ᴛ ɢᴇᴛ ғɪʟᴇs ғʀᴏᴍ ʜᴇʀᴇ...\n\nJᴏɪɴ ᴀɴᴅ Sᴇᴀʀᴄʜ Hᴇʀᴇ - {GRP_LNK}</b>")
+            return await message.reply_text(f"<b>Hᴇʏ {message.from_user.mention}, {str(total_results)} ʀᴇsᴜʟᴛs ᴀʀᴇ ғᴏᴜɴᴅ ɪɴ ᴍʏ ᴅᴀᴛᴀʙᴀsᴇ ғᴏʀ ʏᴏᴜʀ ᴏ̨ᴜᴇʀʏ {search}. \n\nHᴇʀᴇ ᴀʀᴇ ᴏᴜᴛ Uᴘᴅᴀᴛᴇ Cʜᴀɴɴᴇʟs Dᴏ Jᴏɪɴ Tʜᴇᴍ Tᴏ Gᴇᴛ Lᴀᴛᴇsᴛ Uᴘᴅᴀᴛᴇs.\n\n Yᴏᴜ Cᴀɴ Aʟsᴏ Fɪɴᴅ Bᴏᴏᴋs Aɴᴅ Aᴜᴅɪᴏʙᴏᴏᴋs Tʜᴇʀᴇ - <a href='{CHNL_LNK}'>AudioBooks</a> <a href='{GRP_LNK}'>Books</a></b>")
+        
 
 @Client.on_message(filters.private & filters.text & filters.incoming)
 async def pm_text(bot, message):

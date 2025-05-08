@@ -63,23 +63,25 @@ async def auto_approve(client, message: ChatJoinRequest):
                     return 
         else:
             if PREMIUM_AND_REFERAL_MODE == True:
-                buttons = [[
-                    InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-                ],[
-                    InlineKeyboardButton('ᴇᴀʀɴ ᴍᴏɴᴇʏ', callback_data="shortlink_info"),
-                    InlineKeyboardButton('Audiobook/Book ɢʀᴏᴜᴘ', url=GRP_LNK)
+                buttons = [
+                    [
+                    InlineKeyboardButton('Vɪsɪᴛ WɪsɪᴏɴX.ᴄᴏᴍ', web_app=WebAppInfo(url="https://wisionx.com"))
+                    ],
+                [
+                    InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK),
+                    InlineKeyboardButton('ʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=GRP_LNK)
                 ],[
                     InlineKeyboardButton('ʜᴇʟᴘ', callback_data='help'),
                     InlineKeyboardButton('ᴀʙᴏᴜᴛ', callback_data='about')
                 ],[
                     InlineKeyboardButton('ᴘʀᴇᴍɪᴜᴍ ᴀɴᴅ ʀᴇғᴇʀʀᴀʟ', callback_data='subscription')
-                ],[
-                    InlineKeyboardButton('Aᴜᴅɪᴏʙᴏᴏᴋs Cʜᴀɴɴᴇʟʟ', url=CHNL_LNK)
                 ]]
             else:
-                buttons = [[
-                    InlineKeyboardButton('⤬ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ⤬', url=f'http://t.me/{temp.U_NAME}?startgroup=true')
-                ],[
+                buttons = [
+                    [
+                    InlineKeyboardButton('Vɪsɪᴛ WɪsɪᴏɴX.ᴄᴏᴍ', web_app=WebAppInfo(url="https://wisionx.com"))
+                    ]
+                ,[
                     InlineKeyboardButton('ᴇᴀʀɴ ᴍᴏɴᴇʏ', callback_data="shortlink_info"),
                     InlineKeyboardButton('Audiobook/Book ɢʀᴏᴜᴘ', url=GRP_LNK)
                 ],[
