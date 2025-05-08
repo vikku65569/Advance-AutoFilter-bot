@@ -11,14 +11,16 @@ logger.setLevel(logging.ERROR)
 myclient = pymongo.MongoClient(OTHER_DB_URI)
 mydb = myclient[DATABASE_NAME]
 mycol = mydb['CONNECTION'] 
-mycol.create_index("group_details.group_id")
 
-def is_connected(_, __, message):
-    group_id = message.chat.id
-    # Check if the group exists in any user's connections
-    return mycol.count_documents({"group_details.group_id": group_id}) > 0
 
-connected_group = filters.create(is_connected)
+def connected_group():
+    async def func(_, __, message):
+        group_id = message.chat.id
+        # Check if group exists in any user's connections
+        return mycol.count_documents(
+            {"group_details.group_id": group_id}
+        ) > 0
+    return filters.create(func)
 
 async def add_connection(group_id, user_id):
     query = mycol.find_one(
