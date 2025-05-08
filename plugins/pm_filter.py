@@ -50,14 +50,17 @@ BUTTONS1 = {}
 BUTTONS2 = {}
 SPELL_CHECK = {}
 
-def is_connected(_, __, message):
-    group_id = message.chat.id
-    # Check if the group exists in any user's connections
-    return mycol.count_documents({"group_details.group_id": group_id}) > 0
+def connected_group():
+    async def func(_, __, message):
+        group_id = message.chat.id
+        # Check if group exists in any user's connections
+        return mycol.count_documents(
+            {"group_details.group_id": group_id}
+        ) > 0
+    return filters.create(func)
 
-connected_group = filters.create(is_connected)
 
-@Client.on_message(filters.group & filters.text & filters.incoming & connected_group)
+@Client.on_message(filters.group & filters.text & filters.incoming & is_connected())
 async def give_filter(client, message):
     if message.chat.id != SUPPORT_CHAT_ID:
         settings = await get_settings(message.chat.id)

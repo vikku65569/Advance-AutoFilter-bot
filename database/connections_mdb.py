@@ -11,6 +11,7 @@ logger.setLevel(logging.ERROR)
 myclient = pymongo.MongoClient(OTHER_DB_URI)
 mydb = myclient[DATABASE_NAME]
 mycol = mydb['CONNECTION'] 
+mycol.create_index("group_details.group_id")
 
 def is_connected(_, __, message):
     group_id = message.chat.id
