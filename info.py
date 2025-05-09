@@ -57,7 +57,7 @@ AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "6")) # Time in Minutes
 # Website Info:
 WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', True)) # Set True or False
 # If Website Url Mode Is True Then Fill All Required Variable, If False Then Don't Fill.
-WEBSITE_URL = environ.get("WEBSITE_URL", "http://wisionx.42web.io") # For More Information Check Video On Yt -
+WEBSITE_URL = environ.get("WEBSITE_URL", "https://wisionx.42web.io") # For More Information Check Video On Yt -
 
 # This Channel Is For Delete Index File, Forward Your File In This Channel Which You Want To Delete Then Bot Automatically Delete That File From Database.
 DELETE_CHANNELS = [int(dch) if id_pattern.search(dch) else dch for dch in environ.get('DELETE_CHANNELS', '0').split()]  # For Multiple Id Use One Space Between Each.
