@@ -192,8 +192,7 @@ async def start(client, message):
                             logger.error(f"Verification Error: {str(e)}")
                             # Fallback without buttons
                             await message.reply_text(
-                                text=text.format(message.from_user.mention),
-                                protect_content=True
+                                text=text.format(message.from_user.mention)
                             )
                         return
                                     
@@ -253,7 +252,6 @@ async def start(client, message):
                     chat_id=message.from_user.id,
                     file_id=file_id,
                     caption=f_caption,
-                    protect_content=True,
                     reply_markup=reply_markup
                 )
 
