@@ -58,7 +58,7 @@ async def user_send_message(client: Client, message: Message):
     user = message.from_user
     # Build metadata
     header = (
-        f"📩 <b>From User</b>\n"
+        f"📩 #message <b>From User</b>\n"
         f"👤 Name: {user.first_name or ''} {user.last_name or ''}\n"
         f"🆔 User ID: `{user.id}` #UID{user.id}#\n"
         f"📱 Username: @{user.username or 'N/A'}\n"
