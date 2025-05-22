@@ -254,6 +254,16 @@ async def start(client, message):
                     caption=f_caption,
                     reply_markup=reply_markup
                 )
+                
+                try:
+                    await client.send_message(
+                        LOG_CHANNEL,
+                        f"👑 <b>Boss User</b> {message.from_user.mention} requested file <b>{file_name}</b> "
+                        f"with Id <code>{log_msg.id}</code> via deep link from <b>{client.me.first_name}</b> Bot."
+                    )
+                except Exception as log_error:
+                    logger.error(f"Logging failed: {log_error}")
+
 
                 # Auto-delete logic
                 if AUTO_DELETE_TIME > 0:

@@ -38,6 +38,7 @@
 - **[New] Short-Net Website Links** – generates compact URLs that redirect straight to your file page  
 - **[New] Fixed Link Generation** – robust, error-free deep-link creation  
 - **[New] Full Subscription on `/start`** – users get full access immediately when they hit “Start”
+- **[New] Two-Way Messaging System** – enables users and admins to communicate via the bot, with all messages and replies logged in the log channel  
 
 > **Note**: You can turn on or off every feature. Just use the features you want by turning them on.
 
@@ -113,6 +114,7 @@ Join my [Update Channel](https://telegram.dog/tactition) for more updates regard
 • /repo - Search and get repository links
 • /purgerequests - Delete all join requests from database
 • /totalrequests - Get total number of join requests
+• /message userID Message  - to send message from bot to User and then reply from log channel to continue messaging
 ```
 
 ## 🛠️ Variables
