@@ -3,7 +3,8 @@
 import os, logging, time
 from pyrogram import Client, filters, enums
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
-from info import IMDB_TEMPLATE
+from pyrogram.errors import RPCError
+from info import *
 from utils import extract_user, get_file_id, get_poster, last_online 
 from datetime import datetime
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -213,3 +214,45 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
         
 
         
+@Client.on_message(filters.command('message') & filters.user(ADMINS))
+async def message_user(client: Client, message):
+    """
+    Usage:
+      /message <user_id> <message text>
+
+    Sends <message text> to the given <user_id> via the bot.
+    Only users in ADMINS can use this.
+    """
+    parts = message.text.split(None, 2)
+
+    # Check for proper usage
+    if len(parts) < 3:
+        return await message.reply(
+            "⚠️ Usage: `/message <user_id> <text>`",
+            quote=True
+        )
+
+    user_arg, text = parts[1], parts[2]
+
+    # Validate & parse user_id
+    try:
+        user_id = int(user_arg)
+    except ValueError:
+        return await message.reply(
+            "❌ Invalid user ID. It must be a number.",
+            quote=True
+        )
+
+    # Attempt to send
+    try:
+        await client.send_message(chat_id=user_id, text=text)
+        await message.reply(
+            f"✅ Successfully sent your message to `{user_id}`!",
+            quote=True
+        )
+    except RPCError as e:
+        logger.error(f"Failed to send message to {user_id}: {e}")
+        await message.reply(
+            f"❌ Could not deliver message to `{user_id}`.\nError: `{e}`",
+            quote=True
+        )
