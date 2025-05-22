@@ -177,12 +177,12 @@ OTHER DB :-
 ★ Usᴇᴅ Sᴛᴏʀᴀɢᴇ: <code>{} MB</code>
 ★ Fʀᴇᴇ Sᴛᴏʀᴀɢᴇ: <code>{} MB</code></b>"""
     
-    LOG_TEXT_G = """Boss NewGroup Added To Books Database 🔥
+    LOG_TEXT_G = """Boss New Group Added To WisionX Database 🔥
 Gʀᴏᴜᴘ = {}(<code>{}</code>)
 Tᴏᴛᴀʟ Mᴇᴍʙᴇʀs = <code>{}</code>
 Aᴅᴅᴇᴅ Bʏ - {}"""
 
-    LOG_TEXT_P = """New User Added To Books Database 🔥
+    LOG_TEXT_P = """New User Added To WisionX Database 🔥
 ID - <code>{}</code>
 Nᴀᴍᴇ - {}"""
 
