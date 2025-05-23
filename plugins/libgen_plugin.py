@@ -1,6 +1,7 @@
 import logging
 import requests
 import asyncio
+import urllib.parse
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
@@ -16,7 +17,7 @@ def escape_markdown(text: str) -> str:
     return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 def format_book_details(book):
-    """Format book details in Markdown using the exact structure from LibGen results"""
+    """Format book details in Markdown using LibGen's structure"""
     return (
         f"📚 **{escape_markdown(book['Title'])}**\n\n"
         f"👤 **Author:** {escape_markdown(book.get('Author', 'Unknown'))}\n"
@@ -49,15 +50,17 @@ async def handle_libgen_search(client, message):
         if not results:
             return await progress_msg.edit("❌ No results found for your query.")
 
-        # Prepare results list with proper ID handling
+        # Store encoded query and index in callback data
+        encoded_query = urllib.parse.quote(query)
         response = [f"📚 Found {len(results)} results for '{query}':"]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
-            short_title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
+            title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
+            callback_data = f"lgdl_{encoded_query}_{idx-1}"  # Store query and index
             buttons.append(
                 [InlineKeyboardButton(
-                    f"{idx}. {short_title}",
-                    callback_data=f"lgdl_{result['ID']}"  # Store only ID in callback
+                    f"{idx}. {title}",
+                    callback_data=callback_data
                 )]
             )
 
@@ -76,31 +79,30 @@ async def handle_libgen_search(client, message):
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_libgen_download(client, callback_query):
-    """Handle LibGen download callbacks using ID-based search"""
+    """Handle LibGen download callbacks using index-based selection"""
     try:
-        libgen_id = callback_query.data.split("_", 1)[1]
+        # Extract query and index from callback data
+        data_parts = callback_query.data.split("_", 2)
+        encoded_query = data_parts[1]
+        index = int(data_parts[2])
+        original_query = urllib.parse.unquote(encoded_query)
+        
         await callback_query.answer("📥 Fetching download links...")
         
-        # Search using ID filter with proper LibgenSearch syntax
-        results = lg.search_title_filtered(
-            "id_search",  # Dummy query to satisfy API requirements
-            filters={"ID": libgen_id},
-            exact_match=True
-        )
+        # Re-run the original search to get fresh results
+        try:
+            results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
+        except FloodWait as e:
+            await asyncio.sleep(e.value + 2)
+            results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
         
-        if not results:
+        if not results or index >= len(results):
             return await callback_query.message.reply("❌ Book details not found.")
 
-        book = results[0]
+        book = results[index]
+        details = format_book_details(book)
         
-        # Verify result matches expected format
-        if not all(key in book for key in ['Title', 'Author', 'Year', 'Extension']):
-            raise ValueError("Incomplete book data received from LibGen")
-
-        # Format response using the exact structure from LibGen
-        formatted_details = format_book_details(book)
-        
-        # Create buttons with proper mirror links
+        # Create download buttons
         buttons = []
         if book.get('Direct_Download_Link'):
             buttons.append(
@@ -119,7 +121,7 @@ async def handle_libgen_download(client, callback_query):
             buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
         await callback_query.message.reply(
-            formatted_details,
+            details,
             reply_markup=InlineKeyboardMarkup(buttons),
             disable_web_page_preview=not bool(book.get('Cover')),
             parse_mode=enums.ParseMode.MARKDOWN
