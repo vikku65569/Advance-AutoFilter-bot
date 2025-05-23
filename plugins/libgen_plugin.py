@@ -86,10 +86,10 @@ async def handle_libgen_download(client, callback_query):
         libgen_id = callback_query.data.split("_", 1)[1]
         await callback_query.answer("📥 Fetching download links...")
         
-        # FIXED: Use dummy query + correct filter key + proper search method
+        # Fix: Use dummy query with proper search method and case-sensitive filter
         results = lg.search_default_filtered(
-            "000",  # Dummy query to satisfy 3-char requirement
-            filters={"ID": libgen_id},  # Case-sensitive filter key
+            "000",  # Bypass 3-char minimum requirement
+            filters={"ID": libgen_id},  # Case-sensitive ID field
             exact_match=True
         )
         
@@ -99,22 +99,23 @@ async def handle_libgen_download(client, callback_query):
         book = results[0]
         details = format_book_details(book)
         
-        # Create buttons
+        # Create buttons with multiple mirror options
         buttons = []
         if book.get('Direct_Download_Link'):
             buttons.append(
                 [InlineKeyboardButton("⬇️ Direct Download", url=book['Direct_Download_Link'])]
             )
             
+        # Add up to 5 mirror links in a row
         mirror_buttons = []
         for i in range(1, 6):
-            mirror_url = book.get(f'Mirror_{i}')
-            if mirror_url and mirror_url.startswith('http'):
+            if mirror_url := book.get(f'Mirror_{i}'):
                 mirror_buttons.append(InlineKeyboardButton(f"Mirror {i}", url=mirror_url))
         
         if mirror_buttons:
             buttons.append(mirror_buttons)
         
+        # Add cover image button if available
         if book.get('Cover') and book['Cover'].startswith('http'):
             buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
@@ -132,6 +133,7 @@ async def handle_libgen_download(client, callback_query):
         logger.error(f"Callback error: {e}")
         await callback_query.answer("❌ Error processing request")
 
+        
 def download_book(url, filename):
     """Synchronous download helper"""
     try:
