@@ -4,6 +4,7 @@ from pyrogram.utils import escape_markdown
 from libgen_api_enhanced import LibgenSearch
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest
+from pyrogram.helpers import escape_markdown
 
 logger = logging.getLogger(__name__)
 lg = LibgenSearch()
