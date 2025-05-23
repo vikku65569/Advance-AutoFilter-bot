@@ -198,14 +198,21 @@ async def handle_libgen_download(client, callback_query):
                 except Exception as log_error:
                     logger.error(f"Failed to send log: {log_error}")
 
-                # Auto-delete logic
+                # Auto-delete logic (modified)
                 if AUTO_DELETE_TIME > 0:
                     deleter_msg = await callback_query.message.reply(
                         script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN)
                     )
-                    await asyncio.sleep(AUTO_DELETE_TIME)
-                    await sent_msg.delete()
-                    await deleter_msg.edit(script.FILE_DELETED_MSG)
+                    
+                    async def auto_delete_task():
+                        await asyncio.sleep(AUTO_DELETE_TIME)
+                        try:
+                            await sent_msg.delete()
+                            await deleter_msg.edit(script.FILE_DELETED_MSG)
+                        except Exception as e:
+                            logger.error(f"Auto-delete failed: {e}")
+                    
+                    asyncio.create_task(auto_delete_task())  # Start without waiting
 
                 # Cleanup
                 await progress_msg.delete()
