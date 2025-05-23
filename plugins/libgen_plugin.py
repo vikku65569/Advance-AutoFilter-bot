@@ -181,8 +181,10 @@ async def handle_libgen_download(client, callback_query):
 
                 # Auto-delete logic (modified)
                 if AUTO_DELETE_TIME > 0:
-                    deleter_msg = await callback_query.message.reply(
-                        script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN)
+                    deleter_msg = await client.send_message(
+                        chat_id=callback_query.message.chat.id,
+                        text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+                        reply_to_message_id=sent_msg.id
                     )
                     
                     async def auto_delete_task():
