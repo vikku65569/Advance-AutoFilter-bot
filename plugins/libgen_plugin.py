@@ -1,15 +1,16 @@
 import logging
 import asyncio
+import urllib.parse
 import os
 import aiohttp
 import aiofiles
-from info import *
+from info import * 
 from Script import *
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.errors import BadRequest, FloodWait, QueryIdInvalid
+from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
 
 # Initialize LibgenSearch instance
@@ -45,7 +46,7 @@ def format_book_details(book):
 
 @Client.on_message(filters.command('lgsearch') & filters.private)
 async def handle_libgen_search(client, message):
-    """Handle LibGen search requests with persistent callback data"""
+    """Handle LibGen search requests"""
     try:
         query = message.text.split(' ', 1)[1]
         progress_msg = await message.reply("🔍 Searching Library Genesis...")
@@ -59,13 +60,12 @@ async def handle_libgen_search(client, message):
         if not results:
             return await progress_msg.edit("❌ No results found for your query.")
 
+        encoded_query = urllib.parse.quote(query)
         response = [f"📚 Found {len(results)} results for '{query}':"]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
-            # Use MD5 hash from Mirror_1 URL as persistent identifier
-            md5 = result.get('Mirror_1', '').split('/')[-1]
             title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
-            callback_data = f"lgdl_{md5}"
+            callback_data = f"lgdl_{encoded_query}_{idx-1}"
             buttons.append(
                 [InlineKeyboardButton(
                     f"{idx}. {title}",
@@ -88,36 +88,29 @@ async def handle_libgen_search(client, message):
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_libgen_download(client, callback_query):
-    """Handle LibGen download with persistent callback data"""
+    """Handle LibGen download with concurrency control and progress fixes"""
     user_id = callback_query.from_user.id
     async with USER_LOCKS[user_id]:
         try:
-            # Immediate answer to preserve query ID
-            await callback_query.answer("📥 Starting download...")
+            data_parts = callback_query.data.split("_", 2)
+            encoded_query = data_parts[1]
+            index = int(data_parts[2])
+            original_query = urllib.parse.unquote(encoded_query)
             
-            md5 = callback_query.data.split("_", 1)[1]
+            await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
             
             try:
-                # Search by MD5 hash directly
-                results = lg.search_title_filtered(
-                    "",
-                    filters={"md5": md5},
-                    exact_match=True
-                )
+                results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
             except FloodWait as e:
                 await asyncio.sleep(e.value + 2)
-                results = lg.search_title_filtered(
-                    "",
-                    filters={"md5": md5},
-                    exact_match=True
-                )
+                results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
             
-            if not results:
+            if not results or index >= len(results):
                 await progress_msg.edit("❌ Book details not found.")
                 return await asyncio.sleep(5).then(lambda _: progress_msg.delete())
 
-            book = results[0]
+            book = results[index]
             download_url = book.get('Direct_Download_Link')
             
             if not download_url:
@@ -178,6 +171,7 @@ async def handle_libgen_download(client, callback_query):
                         except Exception as e:
                             logger.warning(f"Upload progress update failed: {e}")
 
+                # Send document and store message reference
                 sent_msg = await client.send_document(
                     chat_id=callback_query.message.chat.id,
                     document=temp_path,
@@ -185,7 +179,7 @@ async def handle_libgen_download(client, callback_query):
                     progress=progress
                 )
 
-                # Log to channel
+                # Send log to channel
                 try:
                     await client.send_document(
                         LOG_CHANNEL,
@@ -200,6 +194,7 @@ async def handle_libgen_download(client, callback_query):
                         ),
                         parse_mode=enums.ParseMode.HTML
                     )
+                    
                 except Exception as log_error:
                     logger.error(f"Failed to send log: {log_error}")
 
@@ -212,6 +207,7 @@ async def handle_libgen_download(client, callback_query):
                     await sent_msg.delete()
                     await deleter_msg.edit(script.FILE_DELETED_MSG)
 
+                # Cleanup
                 await progress_msg.delete()
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
@@ -230,11 +226,6 @@ async def handle_libgen_download(client, callback_query):
                     except:
                         pass
 
-        except QueryIdInvalid:
-            logger.warning("Expired callback query, ignoring")
         except Exception as e:
             logger.error(f"Callback error: {e}")
-            try:
-                await callback_query.answer("❌ Error processing request")
-            except QueryIdInvalid:
-                pass
+            await callback_query.answer("❌ Error processing request")
