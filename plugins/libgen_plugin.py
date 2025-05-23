@@ -86,7 +86,9 @@ async def handle_libgen_download(client, callback_query):
         libgen_id = callback_query.data.split("_", 1)[1]
         await callback_query.answer("📥 Fetching download links...")
         
-        results = lg.search_title_filtered(libgen_id, {"ID": libgen_id})
+        # Use correct field name (case-sensitive) and search type
+        results = lg.search_title_filtered("", {"id": libgen_id}, exact_match=True)
+        
         if not results:
             return await callback_query.message.reply("❌ Book details not found.")
 
@@ -102,12 +104,14 @@ async def handle_libgen_download(client, callback_query):
             
         mirror_buttons = []
         for i in range(1, 6):
-            if mirror := book.get(f'Mirror_{i}'):
-                mirror_buttons.append(InlineKeyboardButton(f"Mirror {i}", url=mirror))
+            mirror_url = book.get(f'Mirror_{i}')
+            if mirror_url and mirror_url.startswith('http'):
+                mirror_buttons.append(InlineKeyboardButton(f"Mirror {i}", url=mirror_url))
+        
         if mirror_buttons:
             buttons.append(mirror_buttons)
         
-        if book.get('Cover'):
+        if book.get('Cover') and book['Cover'].startswith('http'):
             buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
         await callback_query.message.reply(
