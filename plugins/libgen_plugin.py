@@ -131,31 +131,38 @@ async def handle_libgen_download(client, callback_query):
                     if response.status != 200:
                         raise Exception(f"Download failed with status {response.status}")
 
-                    total_size = int(response.headers.get('content-length', 0))
+                    total_size = int(response.headers.get('content-length', 0)) or None
                     downloaded = 0
                     
                     async with aiofiles.open(temp_path, 'wb') as f:
                         async for chunk in response.content.iter_chunked(1024*1024):
+                            if not chunk:
+                                continue
                             await f.write(chunk)
                             downloaded += len(chunk)
-                            if total_size > 0:
+                            if total_size:
                                 percent = (downloaded / total_size) * 100
                                 await progress_msg.edit(f"⬇️ Downloading file... ({percent:.1f}%)")
 
-            # Upload to Telegram
+            # Upload to Telegram with proper progress handling
             await progress_msg.edit("📤 Uploading to Telegram...")
+            
+            # Create a separate progress handler
+            async def progress(current, total):
+                percent = current * 100 / total
+                await progress_msg.edit(f"📤 Uploading... ({percent:.1f}%)")
+
             await client.send_document(
                 chat_id=callback_query.message.chat.id,
                 document=temp_path,
                 caption=f"📚 {book['Title']}\n👤 Author: {book.get('Author', 'Unknown')}",
-                progress=lambda current, total: asyncio.create_task(
-                    progress_msg.edit(f"📤 Uploading... ({current*100/total:.1f}%)")
-                )
+                progress=progress
             )
 
             # Cleanup
             await progress_msg.delete()
-            os.remove(temp_path)
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
         except Exception as e:
             logger.error(f"Download error: {e}")
@@ -165,11 +172,10 @@ async def handle_libgen_download(client, callback_query):
             if os.path.exists(temp_path):
                 os.remove(temp_path)
         finally:
-            # Ensure file is removed if it exists
             if os.path.exists(temp_path):
                 try:
                     os.remove(temp_path)
-                except Exception:
+                except:
                     pass
 
     except Exception as e:
