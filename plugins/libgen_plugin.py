@@ -68,7 +68,7 @@ async def handle_libgen_search(client, message):
             callback_data = f"lgdl_{encoded_query}_{idx-1}"
             buttons.append(
                 [InlineKeyboardButton(
-                    f"{idx}.{title}-{result['Extension']}-{result['Size']}",
+                    f"{result['Extension'].upper()}~{result['Size']}-{title}",
                     callback_data=callback_data
                 )]
             )
