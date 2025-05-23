@@ -1,10 +1,14 @@
 import logging
 from pyrogram import Client, filters
-from pyrogram.utils import escape_markdown
 from libgen_api_enhanced import LibgenSearch
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest
-from pyrogram.helpers import escape_markdown
+
+
+def escape_markdown(text: str) -> str:
+    """Custom markdown escaper for Pyrogram"""
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 logger = logging.getLogger(__name__)
 lg = LibgenSearch()
