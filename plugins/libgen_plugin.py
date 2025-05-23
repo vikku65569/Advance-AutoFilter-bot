@@ -36,9 +36,6 @@ def format_book_details(book):
 async def handle_libgen_search(client, message):
     """Handle LibGen search requests"""
     try:
-        # Check force subscription
-        if AUTH_CHANNEL and not await is_subscribed(client, message):
-            return
 
         query = message.text.split(' ', 1)[1]
         progress_msg = await message.reply("🔍 Searching Library Genesis...")
