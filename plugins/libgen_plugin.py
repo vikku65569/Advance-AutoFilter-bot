@@ -1,81 +1,90 @@
 import logging
 import requests
-from pyrogram import Client, filters
-from libgen_api_enhanced import LibgenSearch
+import asyncio
+from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.errors import BadRequest
+from pyrogram.errors import BadRequest, FloodWait
+from libgen_api_enhanced import LibgenSearch
 
-logger = logging.getLogger(__name__)
+# Initialize LibgenSearch instance
 lg = LibgenSearch()
+logger = logging.getLogger(__name__)
 
-def format_book_details(result):
-    """Format book details in a readable format"""
+def escape_markdown(text: str) -> str:
+    """Custom markdown escaper for Pyrogram"""
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    return "".join(f"\\{char}" if char in escape_chars else char for char in text)
+
+def format_book_details(book):
+    """Format book details in Markdown"""
     return (
-        f"📚 **Title:** {result['Title']}\n"
-        f"👤 **Author:** {result.get('Author', 'N/A')}\n"
-        f"📅 **Year:** {result.get('Year', 'N/A')}\n"
-        f"🌐 **Language:** {result.get('Language', 'N/A')}\n"
-        f"📄 **Format:** {result.get('Extension', 'N/A')}\n"
-        f"📦 **Size:** {result.get('Size', 'N/A')}\n"
-        f"🔗 **Direct Download:** {result.get('Direct_Download_Link', 'N/A')}\n"
-        f"🖼 **Cover:** {result.get('Cover', 'N/A')}\n"
-        "\n**Mirrors:**\n" + "\n".join(
-            [f"Mirror {i}: {result[f'Mirror_{i}']}" 
-             for i in range(1, 6) if result.get(f'Mirror_{i}')]
+        f"📚 **{escape_markdown(book['Title'])}**\n\n"
+        f"👤 **Author:** {escape_markdown(book.get('Author', 'Unknown'))}\n"
+        f"📅 **Year:** {escape_markdown(book.get('Year', 'N/A'))}\n"
+        f"🌐 **Language:** {escape_markdown(book.get('Language', 'N/A'))}\n"
+        f"📖 **Pages:** {escape_markdown(book.get('Pages', 'N/A'))}\n"
+        f"📦 **Size:** {escape_markdown(book.get('Size', 'N/A'))}\n"
+        f"📄 **Format:** {escape_markdown(book.get('Extension', 'N/A'))}\n"
+        f"🖼️ **Cover:** {book.get('Cover', 'N/A')}\n\n"
+        "**Download Links:**\n" + "\n".join(
+            [f"🔗 [Mirror {i}]({book[f'Mirror_{i}']})" 
+             for i in range(1, 6) if book.get(f'Mirror_{i}')]
         )
     )
 
 @Client.on_message(filters.command('lgsearch') & filters.private)
-async def search_libgen(client: Client, message):
-    """Handle search command without filters"""
+async def handle_libgen_search(client, message):
+    """Handle LibGen search requests"""
     try:
-        query = message.text.split(' ', 1)[1]
-    except IndexError:
-        return await message.reply("⚠️ Please provide a search query.\nExample: `/lgsearch The Great Gatsby`", parse_mode="markdown")
+        # Check force subscription
+        if AUTH_CHANNEL and not await is_subscribed(client, message):
+            return
 
-    try:
-        msg = await message.reply("🔍 Searching Library Genesis...")
+        query = message.text.split(' ', 1)[1]
+        progress_msg = await message.reply("🔍 Searching Library Genesis...")
         
-        # Search with empty filters and exact match
-        results = lg.search_title_filtered(query, filters={}, exact_match=True)
+        try:
+            results = lg.search_title_filtered(query, filters={}, exact_match=True)
+        except FloodWait as e:
+            await asyncio.sleep(e.value + 2)
+            results = lg.search_title_filtered(query, filters={}, exact_match=True)
         
         if not results:
-            return await msg.edit_text("❌ No results found for your query.")
+            return await progress_msg.edit("❌ No results found for your query.")
 
-        # Format results listing
-        response = [f"📚 Found {len(results)} results:"]
-        for idx, result in enumerate(results[:10], 1):
-            entry = (
-                f"\n{idx}. **{result['Title'][:50]}**\n"
-                f"   👤 {result.get('Author', 'Unknown')} | "
-                f"📅 {result.get('Year', 'N/A')} | "
-                f"📄 {result.get('Extension', 'N/A')}"
-            )
-            response.append(entry)
-
-        # Add download buttons for first 10 results
+        # Prepare results list
+        response = [f"📚 Found {len(results)} results for '{query}':"]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
+            title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
+            response.append(
+                f"\n{idx}. **{escape_markdown(title)}**\n"
+                f"   👤 {escape_markdown(result.get('Author', 'Unknown'))} | "
+                f"📅 {result.get('Year', 'N/A')}"
+            )
             buttons.append(
                 [InlineKeyboardButton(
-                    f"📖 {idx}. {result['Title'][:30]}", 
+                    f"{idx}. {title}",
                     callback_data=f"lgdl_{result['ID']}"
                 )]
             )
 
-        await msg.edit_text(
+        await progress_msg.edit(
             "\n".join(response),
             reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode="markdown"
+            parse_mode=enums.ParseMode.MARKDOWN
         )
 
+    except IndexError:
+        await message.reply("⚠️ Please provide a search query!\nExample: `/lgsearch The Great Gatsby`", 
+                          parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
-        logger.error(f"Search error: {e}")
+        logger.error(f"LibGen search error: {e}")
         await message.reply(f"❌ Error searching LibGen: {str(e)}")
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
-async def handle_download_request(client, callback_query):
-    """Handle download requests"""
+async def handle_libgen_download(client, callback_query):
+    """Handle LibGen download callbacks"""
     try:
         libgen_id = callback_query.data.split("_", 1)[1]
         await callback_query.answer("📥 Fetching download links...")
@@ -87,28 +96,28 @@ async def handle_download_request(client, callback_query):
         book = results[0]
         details = format_book_details(book)
         
-        # Create download buttons
+        # Create buttons
         buttons = []
         if book.get('Direct_Download_Link'):
             buttons.append(
                 [InlineKeyboardButton("⬇️ Direct Download", url=book['Direct_Download_Link'])]
             )
-        
-        # Add mirror buttons
+            
         mirror_buttons = []
         for i in range(1, 6):
             if mirror := book.get(f'Mirror_{i}'):
-                mirror_buttons.append(
-                    InlineKeyboardButton(f"Mirror {i}", url=mirror)
-                )
+                mirror_buttons.append(InlineKeyboardButton(f"Mirror {i}", url=mirror))
         if mirror_buttons:
             buttons.append(mirror_buttons)
+        
+        if book.get('Cover'):
+            buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
         await callback_query.message.reply(
             details,
             reply_markup=InlineKeyboardMarkup(buttons),
-            disable_web_page_preview=True,
-            parse_mode="markdown"
+            disable_web_page_preview=not bool(book.get('Cover')),
+            parse_mode=enums.ParseMode.MARKDOWN
         )
 
     except BadRequest as e:
@@ -119,10 +128,10 @@ async def handle_download_request(client, callback_query):
         await callback_query.answer("❌ Error processing request")
 
 def download_book(url, filename):
-    """Utility function for direct downloads"""
+    """Synchronous download helper"""
     try:
         response = requests.get(url, stream=True)
-        if response.ok:
+        if response.status_code == 200:
             with open(filename, 'wb') as f:
                 for chunk in response.iter_content(1024):
                     f.write(chunk)
