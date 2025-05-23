@@ -4,7 +4,8 @@ import urllib.parse
 import os
 import aiohttp
 import aiofiles
-from info import LOG_CHANNEL
+from info import * 
+from Script import *
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pyrogram import Client, filters, enums
@@ -170,30 +171,43 @@ async def handle_libgen_download(client, callback_query):
                         except Exception as e:
                             logger.warning(f"Upload progress update failed: {e}")
 
-                await client.send_document(
+                # Send document and store message reference
+                sent_msg = await client.send_document(
                     chat_id=callback_query.message.chat.id,
                     document=temp_path,
-                    caption=f"📚 {book.get('Title', 'Unknown')}\n👤 Author: {book.get('Author', 'Unknown')}\n 📦 Size:{book.get('Size', 'N/A')}",
+                    caption=f"📚 {book.get('Title', 'Unknown')}\n👤 Author: {book.get('Author', 'Unknown')}\n📦 Size: {book.get('Size', 'N/A')}",
                     progress=progress
                 )
 
                 # Send log to channel
                 try:
-                    await client.send_document(
-                        LOG_CHANNEL,
-                        document=temp_path,
-                        caption=(
-                            f"📥 User {callback_query.from_user.mention} downloaded:\n"
-                            f"📖 Title: {book.get('Title', 'Unknown')}\n"
-                            f"👤 Author: {book.get('Author', 'Unknown')}\n"
-                            f"📦 Size: {book.get('Size', 'N/A')}\n"
-                            f"🤖 Via: {client.me.first_name}"
-                        ),
-                        parse_mode=enums.ParseMode.HTML
-                    )
+                    if os.path.exists(temp_path):
+                        await client.send_document(
+                            LOG_CHANNEL,
+                            document=temp_path,
+                            caption=(
+                                f"📥 User {callback_query.from_user.mention} downloaded:\n"
+                                f"📖 Title: {escape_markdown(book.get('Title', 'Unknown'))}\n"
+                                f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
+                                f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}\n"
+                                f"👤 User ID: {callback_query.from_user.id}\n"
+                                f"🤖 Via: {client.me.first_name}"
+                            ),
+                            parse_mode=enums.ParseMode.MARKDOWN
+                        )
                 except Exception as log_error:
                     logger.error(f"Failed to send log: {log_error}")
 
+                # Auto-delete logic
+                if AUTO_DELETE_TIME > 0:
+                    deleter_msg = await callback_query.message.reply(
+                        script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN)
+                    )
+                    await asyncio.sleep(AUTO_DELETE_TIME)
+                    await sent_msg.delete()
+                    await deleter_msg.edit(script.FILE_DELETED_MSG)
+
+                # Cleanup
                 await progress_msg.delete()
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
