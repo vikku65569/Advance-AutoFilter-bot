@@ -2,63 +2,85 @@ import logging
 from pyrogram import Client, filters
 from libgen_api_enhanced import LibgenSearch
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import BadRequest
 
 logger = logging.getLogger(__name__)
-
-# Initialize the Libgen search client once
 lg = LibgenSearch()
 
 @Client.on_message(filters.command('lgsearch') & filters.private)
 async def search_libgen(client: Client, message):
-    """
-    Search Library Genesis for books.
-    Usage: /lgsearch <query>
-    """
-    parts = message.text.split(None, 1)
-    if len(parts) < 2:
-        return await message.reply('⚠️ Usage: /lgsearch <book title or author>', quote=True)
-
-    query = parts[1]
-    await message.reply(f'🔍 Searching LibGen for "{query}"...')
+    """Search Library Genesis and display results with inline buttons"""
+    try:
+        query = message.text.split(' ', 1)[1]
+    except IndexError:
+        return await message.reply("⚠️ Please provide a search query.\nExample: `/lgsearch The Great Gatsby`", parse_mode="markdown")
 
     try:
-        results = lg.search_title(query)
+        msg = await message.reply("🔍 Searching Library Genesis...")
+        results = lg.search_title(query)  # You can also use search_author
+        
         if not results:
-            return await message.reply('❌ No results found.', quote=True)
+            return await msg.edit_text("❌ No results found for your query.")
 
-        # Build a keyboard of top 5 results
+        # Prepare buttons for first 5 results
         buttons = []
-        for item in results[:5]:
-            # Use the Libgen ID for download command
-            item_id = item.get('ID')
-            title = item.get('Title')[:40] + ('...' if len(item.get('Title')) > 40 else '')
-            buttons.append([InlineKeyboardButton(title, callback_data=f'lgget:{item_id}')])
+        for result in results[:5]:
+            title = f"{result['Title'][:30]}..." if len(result['Title']) > 30 else result['Title']
+            author = result['Author'][:15] if result['Author'] else "Unknown"
+            btn_text = f"{title} - {author}"
+            buttons.append(
+                [InlineKeyboardButton(btn_text, callback_data=f"lgdl_{result['ID']}")]
+            )
 
-        await message.reply(
-            '✅ Found results. Tap to get download link:',
+        await msg.edit_text(
+            f"📚 Found {len(results)} results for '{query}':",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     except Exception as e:
-        logger.error(f'LibGen search error: {e}')
-        await message.reply(f'❌ Error searching LibGen: {e}', quote=True)
+        logger.error(f"Search error: {e}")
+        await message.reply(f"❌ Error searching LibGen: {str(e)}")
 
-@Client.on_callback_query(filters.regex(r'^lgget:(\d+)$'))
-async def callback_libgen_get(client: Client, callback_query):
-    lib_id = callback_query.matches[0].group(1)
-    await callback_query.answer('Generating download link...')
+@Client.on_callback_query(filters.regex(r"^lgdl_"))
+async def handle_download_request(client, callback_query):
+    """Handle download requests from inline buttons"""
+    try:
+        libgen_id = callback_query.data.split("_", 1)[1]
+        await callback_query.answer("Fetching download links...")
+        
+        # Get exact match using ID
+        results = lg.search_title_filtered(libgen_id, {"ID": libgen_id})
+        if not results:
+            return await callback_query.message.reply("❌ Book details not found.")
 
-    # Use the lib_id as the query so it's long enough
-    details_list = lg.search_title_filtered(lib_id, {'ID': lib_id})
-    if not details_list:
-        return await callback_query.message.reply('❌ Could not retrieve book details.')
+        book = results[0]
+        download_links = [
+            book.get("Direct_Download_Link"),
+            *[book[f"Mirror_{i}"] for i in range(1, 6) if book.get(f"Mirror_{i}")]
+        ]
 
-    item = details_list[0]
-    links = lg.resolve_download_links(item)
-    ddl = links.get('Direct_Download_Link') or list(links.values())[0]
+        # Create message with all valid links
+        links_text = "\n".join(
+            [f"🔗 [Download Mirror {i+1}]({link})" 
+             for i, link in enumerate(download_links) if link]
+        )
+        
+        response_text = (
+            f"📖 **{book['Title']}**\n"
+            f"👤 Author: {book.get('Author', 'Unknown')}\n"
+            f"📅 Year: {book.get('Year', 'N/A')}\n"
+            f"📄 Format: {book.get('Extension', 'N/A')}\n\n"
+            f"{links_text}"
+        )
 
-    text = (
-        f"📚 <b>{item['Title']}</b>\n"
-        f"👤 <i>{item['Author']}</i>\n"
-        f"🔗 <a href=\"{ddl}\">Download here</a>"
-    )
-    await callback_query.message.edit_text(text, disable_web_page_preview=True)
+        # Send as a new message to preserve original results
+        await callback_query.message.reply(
+            response_text,
+            disable_web_page_preview=True,
+            parse_mode="markdown"
+        )
+    except BadRequest as e:
+        logger.error(f"BadRequest error: {e}")
+        await callback_query.answer("Error generating links. Try another book.")
+    except Exception as e:
+        logger.error(f"Callback error: {e}")
+        await callback_query.answer("❌ Error processing request")
