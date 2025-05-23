@@ -63,7 +63,7 @@ async def handle_libgen_search(client, message):
         encoded_query = urllib.parse.quote(query)
         response = [
             f"📚 Found {len(results)} results for <b>{query}</b>:",
-            f"\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
+            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
             f"Torrᴇɴᴛ Sᴇʀᴠᴇʀs ᴏғ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ of Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
         ]
         buttons = []
