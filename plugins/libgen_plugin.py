@@ -181,20 +181,20 @@ async def handle_libgen_download(client, callback_query):
 
                 # Send log to channel
                 try:
-                    if os.path.exists(temp_path):
-                        await client.send_document(
-                            LOG_CHANNEL,
-                            document=temp_path,
-                            caption=(
-                                f"📥 User {callback_query.from_user.mention} downloaded:\n"
-                                f"📖 Title: {escape_markdown(book.get('Title', 'Unknown'))}\n"
-                                f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
-                                f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}\n"
-                                f"👤 User ID: {callback_query.from_user.id}\n"
-                                f"🤖 Via: {client.me.first_name}"
-                            ),
-                            parse_mode=enums.ParseMode.MARKDOWN
-                        )
+                    await client.send_document(
+                        LOG_CHANNEL,
+                        document=temp_path,
+                        caption=(
+                            f"📥 User {callback_query.from_user.mention} downloaded:\n"
+                            f"📖 Title: {escape_markdown(book.get('Title', 'Unknown'))}\n"
+                            f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
+                            f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}\n"
+                            f"👤 User ID: {callback_query.from_user.id}\n"
+                            f"🤖 Via: {client.me.first_name}"
+                        ),
+                        parse_mode=enums.ParseMode.HTML
+                    )
+                    
                 except Exception as log_error:
                     logger.error(f"Failed to send log: {log_error}")
 
