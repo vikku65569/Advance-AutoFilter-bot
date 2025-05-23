@@ -49,7 +49,7 @@ async def handle_libgen_search(client, message):
     """Handle LibGen search requests"""
     try:
         query = message.text.split(' ', 1)[1]
-        progress_msg = await message.reply("🔍 Searching Library Genesis...")
+        progress_msg = await message.reply("🔍 Searching in The Torrent Servers of Magical Library...")
         
         try:
             results = lg.search_title_filtered(query, filters={}, exact_match=True)
