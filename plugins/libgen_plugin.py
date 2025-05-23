@@ -6,6 +6,10 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
+import os
+import aiohttp
+import aiofiles
+from pyrogram.types import InputMediaDocument
 
 # Initialize LibgenSearch instance
 lg = LibgenSearch()
@@ -79,7 +83,7 @@ async def handle_libgen_search(client, message):
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_libgen_download(client, callback_query):
-    """Handle LibGen download callbacks using index-based selection"""
+    """Handle LibGen download and send file to user"""
     try:
         # Extract query and index from callback data
         data_parts = callback_query.data.split("_", 2)
@@ -87,9 +91,12 @@ async def handle_libgen_download(client, callback_query):
         index = int(data_parts[2])
         original_query = urllib.parse.unquote(encoded_query)
         
-        await callback_query.answer("📥 Fetching download links...")
+        await callback_query.answer("📥 Starting download...")
         
-        # Re-run the original search to get fresh results
+        # Show downloading progress message
+        progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
+        
+        # Re-run the original search
         try:
             results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
         except FloodWait as e:
@@ -97,53 +104,74 @@ async def handle_libgen_download(client, callback_query):
             results = lg.search_title_filtered(original_query, filters={}, exact_match=True)
         
         if not results or index >= len(results):
-            return await callback_query.message.reply("❌ Book details not found.")
+            await progress_msg.edit("❌ Book details not found.")
+            return await asyncio.sleep(5).then(lambda _: progress_msg.delete())
 
         book = results[index]
-        details = format_book_details(book)
+        download_url = book.get('Direct_Download_Link')
         
-        # Create download buttons
-        buttons = []
-        if book.get('Direct_Download_Link'):
-            buttons.append(
-                [InlineKeyboardButton("⬇️ Direct Download", url=book['Direct_Download_Link'])]
+        if not download_url:
+            await progress_msg.edit("❌ No direct download available for this book.")
+            return await asyncio.sleep(5).then(lambda _: progress_msg.delete())
+
+        # Generate safe filename
+        clean_title = "".join(c if c.isalnum() else "_" for c in book['Title'])
+        file_ext = book.get('Extension', 'pdf')
+        filename = f"{clean_title[:50]}.{file_ext}"
+        temp_path = f"downloads/{filename}"
+
+        # Create downloads directory if not exists
+        os.makedirs("downloads", exist_ok=True)
+
+        try:
+            # Download file with progress
+            await progress_msg.edit("⬇️ Downloading file... (0%)")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(download_url) as response:
+                    if response.status != 200:
+                        raise Exception(f"Download failed with status {response.status}")
+
+                    total_size = int(response.headers.get('content-length', 0))
+                    downloaded = 0
+                    
+                    async with aiofiles.open(temp_path, 'wb') as f:
+                        async for chunk in response.content.iter_chunked(1024*1024):
+                            await f.write(chunk)
+                            downloaded += len(chunk)
+                            if total_size > 0:
+                                percent = (downloaded / total_size) * 100
+                                await progress_msg.edit(f"⬇️ Downloading file... ({percent:.1f}%)")
+
+            # Upload to Telegram
+            await progress_msg.edit("📤 Uploading to Telegram...")
+            await client.send_document(
+                chat_id=callback_query.message.chat.id,
+                document=temp_path,
+                caption=f"📚 {book['Title']}\n👤 Author: {book.get('Author', 'Unknown')}",
+                progress=lambda current, total: asyncio.create_task(
+                    progress_msg.edit(f"📤 Uploading... ({current*100/total:.1f}%)")
+                )
             )
-            
-        mirror_buttons = []
-        for i in range(1, 6):
-            if mirror_url := book.get(f'Mirror_{i}'):
-                mirror_buttons.append(InlineKeyboardButton(f"Mirror {i}", url=mirror_url))
-        
-        if mirror_buttons:
-            buttons.append(mirror_buttons)
-        
-        if book.get('Cover') and book['Cover'].startswith('http'):
-            buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
-        await callback_query.message.reply(
-            details,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            disable_web_page_preview=not bool(book.get('Cover')),
-            parse_mode=enums.ParseMode.MARKDOWN
-        )
+            # Cleanup
+            await progress_msg.delete()
+            os.remove(temp_path)
 
-    except BadRequest as e:
-        logger.error(f"BadRequest error: {e}")
-        await callback_query.answer("⚠️ Error showing details. Try another book.")
+        except Exception as e:
+            logger.error(f"Download error: {e}")
+            await progress_msg.edit(f"❌ Download failed: {str(e)}")
+            await asyncio.sleep(5)
+            await progress_msg.delete()
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        finally:
+            # Ensure file is removed if it exists
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
+
     except Exception as e:
         logger.error(f"Callback error: {e}")
         await callback_query.answer("❌ Error processing request")
-
-def download_book(url, filename):
-    """Synchronous download helper"""
-    try:
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            with open(filename, 'wb') as f:
-                for chunk in response.iter_content(1024):
-                    f.write(chunk)
-            return True
-        return False
-    except Exception as e:
-        logger.error(f"Download error: {e}")
-        return False
