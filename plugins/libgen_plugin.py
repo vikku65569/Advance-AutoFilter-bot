@@ -44,30 +44,21 @@ async def search_libgen(client: Client, message):
 
 @Client.on_callback_query(filters.regex(r'^lgget:(\d+)$'))
 async def callback_libgen_get(client: Client, callback_query):
-    """
-    Handle button presses to fetch download link for a given Libgen ID.
-    """
     lib_id = callback_query.matches[0].group(1)
     await callback_query.answer('Generating download link...')
 
-    try:
-        # Get details for this item by ID search
-        details_list = lg.search_title_filtered('', {'ID': lib_id})
-        if not details_list:
-            return await callback_query.message.reply('❌ Could not retrieve book details.')
-        item = details_list[0]
-        # Resolve download links (returns dict of mirrors)
-        links = lg.resolve_download_links(item)
-        # Pick first direct download link
-        ddl = links.get('Direct_Download_Link') or list(links.values())[0]
+    # Use the lib_id as the query so it's long enough
+    details_list = lg.search_title_filtered(lib_id, {'ID': lib_id})
+    if not details_list:
+        return await callback_query.message.reply('❌ Could not retrieve book details.')
 
-        text = (
-            f"📚 <b>{item.get('Title')}</b>\n"
-            f"👤 <i>{item.get('Author')}</i>\n"
-            f"📖 {item.get('Pages')} pages | {item.get('Extension')} | {item.get('Size')}\n"
-            f"🔗 <a href=\"{ddl}\">Download here</a>"
-        )
-        await callback_query.message.edit_text(text, disable_web_page_preview=True)
-    except Exception as e:
-        logger.error(f'LibGen get error: {e}')
-        await callback_query.message.reply(f'❌ Error fetching download link: {e}')
+    item = details_list[0]
+    links = lg.resolve_download_links(item)
+    ddl = links.get('Direct_Download_Link') or list(links.values())[0]
+
+    text = (
+        f"📚 <b>{item['Title']}</b>\n"
+        f"👤 <i>{item['Author']}</i>\n"
+        f"🔗 <a href=\"{ddl}\">Download here</a>"
+    )
+    await callback_query.message.edit_text(text, disable_web_page_preview=True)
