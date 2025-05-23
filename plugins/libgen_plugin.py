@@ -61,7 +61,11 @@ async def handle_libgen_search(client, message):
             return await progress_msg.edit("❌ No results found for your query.")
 
         encoded_query = urllib.parse.quote(query)
-        response = [f"📚 Found {len(results)} results for '{query}':"]
+        response = [
+            f"📚 Found {len(results)} results for <b>{query}</b>:",
+            f"\n\nRᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
+            f"Torrᴇɴᴛ Sᴇʀᴠᴇʀs ᴏғ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ of Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
+        ]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
             title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
@@ -76,7 +80,7 @@ async def handle_libgen_search(client, message):
         await progress_msg.edit(
             "\n".join(response),
             reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.MARKDOWN
+            parse_mode=enums.ParseMode.HTML
         )
 
     except IndexError:
