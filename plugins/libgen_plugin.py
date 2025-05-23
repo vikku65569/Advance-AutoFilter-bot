@@ -86,8 +86,12 @@ async def handle_libgen_download(client, callback_query):
         libgen_id = callback_query.data.split("_", 1)[1]
         await callback_query.answer("📥 Fetching download links...")
         
-        # Use correct field name (case-sensitive) and search type
-        results = lg.search_title_filtered("", {"id": libgen_id}, exact_match=True)
+        # FIXED: Use dummy query + correct filter key + proper search method
+        results = lg.search_default_filtered(
+            "000",  # Dummy query to satisfy 3-char requirement
+            filters={"ID": libgen_id},  # Case-sensitive filter key
+            exact_match=True
+        )
         
         if not results:
             return await callback_query.message.reply("❌ Book details not found.")
