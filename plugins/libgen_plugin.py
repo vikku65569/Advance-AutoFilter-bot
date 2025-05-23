@@ -1,6 +1,7 @@
 import logging
 import requests
 import asyncio
+import urllib.parse
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
@@ -36,7 +37,6 @@ def format_book_details(book):
 async def handle_libgen_search(client, message):
     """Handle LibGen search requests"""
     try:
-
         query = message.text.split(' ', 1)[1]
         progress_msg = await message.reply("🔍 Searching Library Genesis...")
         
@@ -49,20 +49,16 @@ async def handle_libgen_search(client, message):
         if not results:
             return await progress_msg.edit("❌ No results found for your query.")
 
-        # Prepare results list
         response = [f"📚 Found {len(results)} results for '{query}':"]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
             title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
-            response.append(
-                f"\n{idx}. **{escape_markdown(title)}**\n"
-                f"   👤 {escape_markdown(result.get('Author', 'Unknown'))} | "
-                f"📅 {result.get('Year', 'N/A')}"
-            )
+            # Store URL-encoded full title in callback data
+            encoded_title = urllib.parse.quote_plus(result['Title'])
             buttons.append(
                 [InlineKeyboardButton(
                     f"{idx}. {title}",
-                    callback_data=f"lgdl_{result['ID']}"
+                    callback_data=f"lgdl_{encoded_title}"
                 )]
             )
 
@@ -83,13 +79,14 @@ async def handle_libgen_search(client, message):
 async def handle_libgen_download(client, callback_query):
     """Handle LibGen download callbacks"""
     try:
-        libgen_id = callback_query.data.split("_", 1)[1]
+        encoded_title = callback_query.data.split("_", 1)[1]
+        title = urllib.parse.unquote_plus(encoded_title)
         await callback_query.answer("📥 Fetching download links...")
         
-        # Fix: Use dummy query with proper search method and case-sensitive filter
-        results = lg.search_default_filtered(
-            "000",  # Bypass 3-char minimum requirement
-            filters={"ID": libgen_id},  # Case-sensitive ID field
+        # Search with original exact title
+        results = lg.search_title_filtered(
+            title_query=title,
+            filters={},
             exact_match=True
         )
         
@@ -99,14 +96,13 @@ async def handle_libgen_download(client, callback_query):
         book = results[0]
         details = format_book_details(book)
         
-        # Create buttons with multiple mirror options
+        # Create buttons
         buttons = []
         if book.get('Direct_Download_Link'):
             buttons.append(
                 [InlineKeyboardButton("⬇️ Direct Download", url=book['Direct_Download_Link'])]
             )
             
-        # Add up to 5 mirror links in a row
         mirror_buttons = []
         for i in range(1, 6):
             if mirror_url := book.get(f'Mirror_{i}'):
@@ -115,7 +111,6 @@ async def handle_libgen_download(client, callback_query):
         if mirror_buttons:
             buttons.append(mirror_buttons)
         
-        # Add cover image button if available
         if book.get('Cover') and book['Cover'].startswith('http'):
             buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
 
@@ -133,7 +128,6 @@ async def handle_libgen_download(client, callback_query):
         logger.error(f"Callback error: {e}")
         await callback_query.answer("❌ Error processing request")
 
-        
 def download_book(url, filename):
     """Synchronous download helper"""
     try:
