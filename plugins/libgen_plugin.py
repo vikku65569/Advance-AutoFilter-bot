@@ -1,5 +1,6 @@
 import logging
 from pyrogram import Client, filters
+from pyrogram.utils import escape_markdown
 from libgen_api_enhanced import LibgenSearch
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest
@@ -17,12 +18,11 @@ async def search_libgen(client: Client, message):
 
     try:
         msg = await message.reply("🔍 Searching Library Genesis...")
-        results = lg.search_title(query)  # You can also use search_author
+        results = lg.search_title(query)
         
         if not results:
             return await msg.edit_text("❌ No results found for your query.")
 
-        # Prepare buttons for first 5 results
         buttons = []
         for result in results[:5]:
             title = f"{result['Title'][:30]}..." if len(result['Title']) > 30 else result['Title']
@@ -45,42 +45,55 @@ async def handle_download_request(client, callback_query):
     """Handle download requests from inline buttons"""
     try:
         libgen_id = callback_query.data.split("_", 1)[1]
-        await callback_query.answer("Fetching download links...")
+        await callback_query.answer("📖 Fetching book details...")
         
-        # Get exact match using ID
         results = lg.search_title_filtered(libgen_id, {"ID": libgen_id})
         if not results:
             return await callback_query.message.reply("❌ Book details not found.")
 
         book = results[0]
-        download_links = [
-            book.get("Direct_Download_Link"),
-            *[book[f"Mirror_{i}"] for i in range(1, 6) if book.get(f"Mirror_{i}")]
-        ]
-
-        # Create message with all valid links
-        links_text = "\n".join(
-            [f"🔗 [Download Mirror {i+1}]({link})" 
-             for i, link in enumerate(download_links) if link]
-        )
         
-        response_text = (
-            f"📖 **{book['Title']}**\n"
-            f"👤 Author: {book.get('Author', 'Unknown')}\n"
-            f"📅 Year: {book.get('Year', 'N/A')}\n"
-            f"📄 Format: {book.get('Extension', 'N/A')}\n\n"
-            f"{links_text}"
+        details = (
+            f"📚 **{escape_markdown(book['Title'])}**\n\n"
+            f"👤 **Author:** {escape_markdown(book.get('Author', 'Unknown'))}\n"
+            f"📅 **Year:** {escape_markdown(book.get('Year', 'N/A'))}\n"
+            f"🌐 **Language:** {escape_markdown(book.get('Language', 'N/A'))}\n"
+            f"📖 **Pages:** {escape_markdown(book.get('Pages', 'N/A'))}\n"
+            f"📦 **Size:** {escape_markdown(book.get('Size', 'N/A'))}\n"
+            f"📄 **Format:** {escape_markdown(book.get('Extension', 'N/A'))}\n"
+            f"🏷️ **ISBN:** {escape_markdown(book.get('ISBN', 'N/A'))}\n"
+            f"🖼️ **Cover:** {book.get('Cover', 'N/A')}\n\n"
         )
 
-        # Send as a new message to preserve original results
-        await callback_query.message.reply(
-            response_text,
-            disable_web_page_preview=True,
-            parse_mode="markdown"
+        links = []
+        if book.get('Direct_Download_Link'):
+            links.append(f"🔗 [Direct Download]({book['Direct_Download_Link']})")
+            
+        for i in range(1, 6):
+            if mirror := book.get(f'Mirror_{i}'):
+                links.append(f"🔗 [Mirror {i}]({mirror})")
+
+        buttons = []
+        if links:
+            details += "**Download Links:**\n" + "\n".join(links)
+            buttons.append([InlineKeyboardButton(
+                "⬇️ Direct Download", 
+                url=book.get('Direct_Download_Link', '')
+            )])
+
+        if book.get('Cover'):
+            buttons.append([InlineKeyboardButton("🖼 Cover Image", url=book['Cover'])])
+
+        await callback_query.message.edit_text(
+            details,
+            reply_markup=InlineKeyboardMarkup(buttons) if buttons else None,
+            disable_web_page_preview=not bool(book.get('Cover')),
+            parse_mode="Markdown"
         )
+
     except BadRequest as e:
         logger.error(f"BadRequest error: {e}")
-        await callback_query.answer("Error generating links. Try another book.")
+        await callback_query.answer("⚠️ Error showing details. Try another book.")
     except Exception as e:
         logger.error(f"Callback error: {e}")
         await callback_query.answer("❌ Error processing request")
