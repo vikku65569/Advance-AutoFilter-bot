@@ -212,7 +212,10 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     "plot":             imdb['plot'],
     "rating":           imdb['rating'],
     "url":              imdb['url'],
-    "remaining_seconds": remaining_seconds
+    "remaining_seconds": remaining_seconds,
+    "message":          message,
+
+
     }
 
     try:
@@ -257,6 +260,9 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
             plot = imdb['plot'],
             rating = imdb['rating'],
             url = imdb['url'],
+            message = message,
+            remaining_seconds = remaining_seconds,
+
             **locals()
         )
     else:
