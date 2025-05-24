@@ -215,7 +215,6 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
             rating = imdb['rating'],
             url = imdb['url'],
             message = message,
-            remaining_seconds = remaining_seconds,
 
             **locals()
         )
