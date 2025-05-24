@@ -2621,43 +2621,42 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             files, offset, total_results = await get_search_results(message.chat.id ,search, offset=0, filter=True)
             settings = await get_settings(message.chat.id)
 
+            if not files:
+                if settings["spell_check"]:
+                    return await advantage_spell_chok(client, name, msg, reply_msg, ai_search)
+                else:
+                    return await reply_msg.edit_text(f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**")
+
             # if not files:
             #     if settings["spell_check"]:
             #         return await advantage_spell_chok(client, name, msg, reply_msg, ai_search)
             #     else:
-            #         return await reply_msg.edit_text(f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**")
-                
-        if not files:
-                if settings["spell_check"]:
-                    return await advantage_spell_chok(client, name, msg, reply_msg, ai_search)
-                else:
-                    # Original message kept as fallback
-                    original_message = f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**"
+            #         # Original message kept as fallback
+            #         original_message = f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**"
                     
-                    try:
-                        # Add LibGen search attempt
-                        await reply_msg.edit_text(f"🔍 Doing a deep search for '{name}'...")
-                        results = await libgen_search(name)
+            #         try:
+            #             # Add LibGen search attempt
+            #             await reply_msg.edit_text(f"🔍 Doing a deep search for '{name}'...")
+            #             results = await libgen_search(name)
                         
-                        if results:
-                            buttons = await create_search_buttons(results, name)
-                            response = [
-                                f"📚 Found {len(results)} LibGen results for <b>{name}</b>:",
-                                f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
-                                f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ"
-                            ]
-                            return await reply_msg.edit(
-                                "\n".join(response),
-                                reply_markup=buttons,
-                                parse_mode=enums.ParseMode.HTML
-                            )
+            #             if results:
+            #                 buttons = await create_search_buttons(results, name)
+            #                 response = [
+            #                     f"📚 Found {len(results)} LibGen results for <b>{name}</b>:",
+            #                     f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
+            #                     f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ"
+            #                 ]
+            #                 return await reply_msg.edit(
+            #                     "\n".join(response),
+            #                     reply_markup=buttons,
+            #                     parse_mode=enums.ParseMode.HTML
+            #                 )
                         
-                    except Exception as e:
-                        logger.error(f"LibGen fallback error: {e}")
+            #         except Exception as e:
+            #             logger.error(f"LibGen fallback error: {e}")
                     
-                    # Fallback to original message if LibGen search fails
-                    return await reply_msg.edit_text(original_message)    
-
+            #         # Fallback to original message if LibGen search fails
+            #         return await reply_msg.edit_text(original_message)
 
         else:
             return
