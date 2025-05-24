@@ -211,7 +211,6 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
             plot = imdb['plot'],
             rating = imdb['rating'],
             url = imdb['url'],
-             # 👉 add this line for remanining time in template
             remaining_seconds = remaining_seconds,
             **locals()
         )
