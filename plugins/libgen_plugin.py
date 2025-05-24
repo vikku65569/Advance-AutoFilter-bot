@@ -232,8 +232,7 @@ async def handle_pagination(client, callback_query):
         response = [
             f"📚 Found {total} results for <b>{query}</b>:",
             f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {callback_query.from_user.mention}",
-            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-            f"📑 Page {page}/{total_pages}"
+            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ"
         ]
 
         await callback_query.message.edit(
