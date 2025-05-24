@@ -147,7 +147,8 @@ async def imdb_search(client, message):
 
             # use the OpenLibrary work key as your callback ID
             work_key = book.get('key')  # e.g. "/works/OL1268413W"
-            callback_data = f"imdb#{work_key.lstrip('/')}"
+            callback_data = f"imdb#{work_key}"
+
 
             btn.append([InlineKeyboardButton(text=text, callback_data=callback_data)])
 
@@ -162,6 +163,8 @@ async def imdb_search(client, message):
 @Client.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     i, movie = quer_y.data.split('#')
+    if not movie.startswith('/'):
+        movie = '/' + movie
     imdb = await get_poster(query=movie, id=True)
     btn = [
             [
