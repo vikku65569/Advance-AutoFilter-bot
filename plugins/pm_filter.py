@@ -2631,31 +2631,42 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
                 if settings["spell_check"]:
                     return await advantage_spell_chok(client, name, msg, reply_msg, ai_search)
                 else:
-                    # Original message kept as fallback
                     original_message = f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**"
                     
                     try:
-                        # Add LibGen search attempt
+                        # LibGen fallback search
                         await reply_msg.edit_text(f"🔍 Doing a deep search for '{name}'...")
                         results = await libgen_search(name)
                         
                         if results:
-                            buttons = await create_search_buttons(results, name)
+                            # Generate unique search key
+                            search_key = str(uuid4())
+                            search_cache[search_key] = {
+                                'results': results,
+                                'query': name,
+                                'time': datetime.now()
+                            }
+
+                            # Create paginated buttons
+                            buttons = await create_search_buttons(results, search_key, 1)
+                            
                             response = [
                                 f"📚 Found {len(results)} LibGen results for <b>{name}</b>:",
                                 f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
-                                f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ"
+                                f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                                f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
                             ]
+                            
                             return await reply_msg.edit(
                                 "\n".join(response),
                                 reply_markup=buttons,
                                 parse_mode=enums.ParseMode.HTML
                             )
-                        
+                            
                     except Exception as e:
                         logger.error(f"LibGen fallback error: {e}")
                     
-                    # Fallback to original message if LibGen search fails
+                    # Fallback to original message if everything fails
                     return await reply_msg.edit_text(original_message)
 
         else:
