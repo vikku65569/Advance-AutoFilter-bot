@@ -51,8 +51,8 @@ FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '-100
 
 DB_CHANNEL = int(environ.get("DB_CHANNEL", "-1002509332985")) 
 SECONDARY_DB_CHANNEL = int(environ.get("SECONDARY_DB_CHANNEL", "-1002141494142")) #file chaneel 
-AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "30")) # Time in Seconds
-AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "1")) # Time in Minutes
+AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "120")) # Time in Seconds
+AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "2")) # Time in Minutes
 
 # Website Info:
 WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', True)) # Set True or False
@@ -102,7 +102,7 @@ SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'Self_Improvement_AudioBook_Bot') # S
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/Self_Improvement_AudioBook_Bot')
 
 # True Or False
-AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', False))
+AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', True))
 SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", True))
 PM_SEARCH = bool(environ.get('PM_SEARCH', True))
 BUTTON_MODE = bool(environ.get('BUTTON_MODE', True))
