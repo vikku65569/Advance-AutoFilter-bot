@@ -129,26 +129,35 @@ async def who_is(client, message):
         )
     await status_message.delete()
 
-@Client.on_message(filters.command(["imdb", 'search']))
+@Client.on_message(filters.command(["imdb", "search"]))
 async def imdb_search(client, message):
     if ' ' in message.text:
-        k = await message.reply('Searching ImDB')
-        r, title = message.text.split(None, 1)
-        movies = await get_poster(title, bulk=True)
-        if not movies:
+        k = await message.reply('Searching Books…')
+        _, title = message.text.split(None, 1)
+
+        # bulk=True now returns a list of dicts from OpenLibrary search
+        books = await get_poster(title, bulk=True)
+        if not books:
             return await message.reply("No results Found")
-        btn = [
-            [
-                InlineKeyboardButton(
-                    text=f"{movie.get('title')} - {movie.get('year')}",
-                    callback_data=f"imdb#{movie.movieID}",
-                )
-            ]
-            for movie in movies
-        ]
-        await k.edit('Here is what i found on IMDb', reply_markup=InlineKeyboardMarkup(btn))
+
+        btn = []
+        for book in books:
+            # title and year come from the dict keys
+            text = f"{book.get('title')} - {book.get('first_publish_year', 'N/A')}"
+
+            # use the OpenLibrary work key as your callback ID
+            work_key = book.get('key')  # e.g. "/works/OL1268413W"
+            callback_data = f"imdb#{work_key.lstrip('/')}"
+
+            btn.append([InlineKeyboardButton(text=text, callback_data=callback_data)])
+
+        await k.edit(
+            "Here is what I found:",
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
     else:
         await message.reply('Give me a Book Name')
+
 
 @Client.on_callback_query(filters.regex('^imdb'))
 async def imdb_callback(bot: Client, quer_y: CallbackQuery):
