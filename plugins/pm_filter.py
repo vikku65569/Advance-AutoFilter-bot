@@ -276,7 +276,11 @@ async def advantage_spoll_choker(bot, query):
                 ai_search = True
                 reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg, ai_search, k)
-                
+
+            else:
+                reqstr1 = query.from_user.id if query.from_user else 0
+                reqstr = await bot.get_users(reqstr1)
+
                 try:
                     await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'...")
 
@@ -303,19 +307,18 @@ async def advantage_spoll_choker(bot, query):
                             reply_markup=buttons,
                             parse_mode=enums.ParseMode.HTML
                         )
+
+                        return
+
                     else:
                         await reply_msg.edit_text(f"⚠️ No LibGen results for '{movie}'.")
+                        
                 except Exception as e:
                     logger.error(f"LibGen fallback error: {e}")
                     await reply_msg.edit_text(
                         f"**⚠️ LibGen Search Failed.**\nError: `{e}`",
                         parse_mode=enums.ParseMode.MARKDOWN
                     )
-
-
-            else:
-                reqstr1 = query.from_user.id if query.from_user else 0
-                reqstr = await bot.get_users(reqstr1)
 
                 if NO_RESULTS_MSG:
                     await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
