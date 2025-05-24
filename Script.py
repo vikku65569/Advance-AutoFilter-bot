@@ -264,7 +264,7 @@ Books Data:
 🎛 Countries : <code>{countries}</code>
 
 
-⏰Result Shown in:  <i>seconds</i> 🔥
+⏰Result Shown in: <i>seconds</i> 🔥
 
 Requested by : {message.from_user.mention}</b>"""
     
