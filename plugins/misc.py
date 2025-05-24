@@ -182,53 +182,6 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())    
     message = quer_y.message.reply_to_message or quer_y.message
 
-    # build a dict of only the keys you intend to pass
-    kwargs = {
-    "query":            imdb['title'],           # if you’ve fixed `{qurey}` to `{query}`
-    "title":            imdb['title'],
-    "votes":            imdb['votes'],
-    "aka":              imdb['aka'],
-    "seasons":          imdb['seasons'],
-    "box_office":       imdb['box_office'],
-    "localized_title":  imdb['localized_title'],
-    "kind":             imdb['kind'],
-    "imdb_id":          imdb['imdb_id'],
-    "cast":             imdb['cast'],
-    "runtime":          imdb['runtime'],
-    "countries":        imdb['countries'],
-    "certificates":     imdb['certificates'],
-    "languages":        imdb['languages'],
-    "director":         imdb['director'],
-    "writer":           imdb['writer'],
-    "producer":         imdb['producer'],
-    "composer":         imdb['composer'],
-    "cinematographer":  imdb['cinematographer'],
-    "music_team":       imdb['music_team'],
-    "distributors":     imdb['distributors'],
-    "release_date":     imdb['release_date'],
-    "year":             imdb['year'],
-    "genres":           imdb['genres'],
-    "poster":           imdb['poster'],
-    "plot":             imdb['plot'],
-    "rating":           imdb['rating'],
-    "url":              imdb['url'],
-    "message":          message,
-    "remaining_seconds": remaining_seconds,
-
-
-    }
-
-    try:
-        caption = IMDB_TEMPLATE.format(**kwargs)
-    except KeyError as e:
-        missing = e.args[0]
-        placeholders = set(re.findall(r"{([^}]+)}", IMDB_TEMPLATE))
-        provided    = set(kwargs.keys())
-        logger.error(f"Template is missing a value for placeholder: '{missing}'")
-        logger.debug(f"All placeholders: {placeholders}")
-        logger.debug(f"Provided keys: {provided}")
-        raise
-
 
     if imdb:
         caption = IMDB_TEMPLATE.format(
@@ -261,7 +214,8 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
             plot = imdb['plot'],
             rating = imdb['rating'],
             url = imdb['url'],
-            
+            message = message,
+            remaining_seconds = remaining_seconds,
 
             **locals()
         )

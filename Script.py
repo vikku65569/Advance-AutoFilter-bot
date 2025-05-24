@@ -250,7 +250,7 @@ File/Book/Audiobook ʀᴇǫᴜᴇꜱᴛ ꜰᴏʀᴍᴀᴛ 👇
 <b>⚙️ sɪᴢᴇ : {file_size}</b>""" 
 
     IMDB_TEMPLATE_TXT = """
-<b>Query: {query}
+<b>Query: {qurey}
 
 Books Data:
 
@@ -264,9 +264,9 @@ Books Data:
 🎛 Countries : <code>{countries}</code>
 
 
-⏰Result Shown in: <i>seconds</i> 🔥
+⏰Result Shown in: {remaining_seconds} <i>seconds</i> 🔥
 
-Requested by :</b>"""
+Requested by : {message.from_user.mention}</b>"""
     
     ALL_FILTERS = """
 <b>Hᴇʏ {}, Tʜᴇsᴇ ᴀʀᴇ ᴍʏ ᴛʜʀᴇᴇ ᴛʏᴘᴇs ᴏғ ғɪʟᴛᴇʀs.</b>"""
