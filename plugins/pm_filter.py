@@ -2902,40 +2902,33 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             except:
                 pass
             if mv_rqst.startswith(Zahid[0]):
-                
-                try:
-                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
+                await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
 
-                    results = await libgen_search(Zahid)
+                results = await libgen_search(Zahid)
 
-                    if results:
-                        search_key = str(uuid4())
-                        search_cache[search_key] = {
-                            'results': results,
-                            'query': Zahid,
-                            'time': datetime.now()
-                        }
+                if results:
+                    search_key = str(uuid4())
+                    search_cache[search_key] = {
+                        'results': results,
+                        'query': Zahid,
+                        'time': datetime.now()
+                    }
 
-                        buttons = await create_search_buttons(results, search_key, 1)
+                    buttons = await create_search_buttons(results, search_key, 1)
 
-                        response = [
-                            f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
-                            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
-                            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-                            f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
-                        ]
+                    response = [
+                        f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
+                        f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
+                        f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                        f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+                    ]
 
-                        await reply_msg.edit(
-                            "\n".join(response),
-                            reply_markup=buttons,
-                            parse_mode=enums.ParseMode.HTML
-                        )
-                        break  # Stop further processing once LibGen result is shown
-
-                except Exception as e:
-                    logger.error(f"LibGen fallback error: {e}")
-                    await reply_msg.edit_text(f"**⚠️ LibGen Search Failed.**\nError: `{e}`", parse_mode=enums.ParseMode.MARKDOWN)
-                    break
+                    await reply_msg.edit(
+                        "\n".join(response),
+                        reply_markup=buttons,
+                        parse_mode=enums.ParseMode.HTML
+                    )
+                    break  # Stop further processing once LibGen result is shown
 
             
         reqst_gle = mv_rqst.replace(" ", "+")
