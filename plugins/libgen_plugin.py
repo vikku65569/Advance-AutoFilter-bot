@@ -44,7 +44,7 @@ def format_book_details(book):
         f"\n\n**Direct Download:** {book.get('Direct_Download_Link', 'N/A')}"
     )
 
-@Client.on_message(filters.command('lgsearch') & filters.private)
+@Client.on_message(filters.command('search') & filters.private)
 async def handle_libgen_search(client, message):
     """Handle LibGen search requests"""
     try:
@@ -64,7 +64,7 @@ async def handle_libgen_search(client, message):
         response = [
             f"📚 Found {len(results)} results for <b>{query}</b>:",
             f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
-            f"Torrᴇɴᴛ Sᴇʀᴠᴇʀs ᴏғ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ of Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
+            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ ᴏғ Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
         ]
         buttons = []
         for idx, result in enumerate(results[:10], 1):
@@ -84,7 +84,7 @@ async def handle_libgen_search(client, message):
         )
 
     except IndexError:
-        await message.reply("⚠️ Please provide a search query!\nExample: `/lgsearch The Great Gatsby`", 
+        await message.reply("⚠️ Please provide a search query!\nExample: `/search The Great Gatsby`", 
                           parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
         logger.error(f"LibGen search error: {e}")
