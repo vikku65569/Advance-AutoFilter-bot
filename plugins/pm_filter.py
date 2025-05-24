@@ -268,17 +268,58 @@ async def advantage_spoll_choker(bot, query):
     if gl == False:
         k = await manual_filters(bot, query.message, text=movie)
         if k == False:
+
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
+
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
                 reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg, ai_search, k)
+                
+                try:
+                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'...")
+
+                    results = await libgen_search(movie)
+                    if results:
+                        # Cache and paginate
+                        search_key = str(uuid4())
+                        search_cache[search_key] = {
+                            "results": results,
+                            "query": movie,
+                            "time": datetime.now()
+                        }
+                        buttons = await create_search_buttons(results, search_key, 1)
+
+                        response = [
+                            f"📚 Found {len(results)} LibGen results for <b>{movie}</b>:",
+                            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {reply_msg.from_user.mention if reply_msg.from_user else 'Unknown User'}",
+                            "Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                            f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+                        ]
+
+                        await reply_msg.edit(
+                            "\n".join(response),
+                            reply_markup=buttons,
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                    else:
+                        await reply_msg.edit_text(f"⚠️ No LibGen results for '{movie}'.")
+                except Exception as e:
+                    logger.error(f"LibGen fallback error: {e}")
+                    await reply_msg.edit_text(
+                        f"**⚠️ LibGen Search Failed.**\nError: `{e}`",
+                        parse_mode=enums.ParseMode.MARKDOWN
+                    )
+
+
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
                 reqstr = await bot.get_users(reqstr1)
+
                 if NO_RESULTS_MSG:
                     await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
+
                 k = await query.message.edit(script.MVE_NT_FND)
                 await asyncio.sleep(10)
                 await k.delete()
