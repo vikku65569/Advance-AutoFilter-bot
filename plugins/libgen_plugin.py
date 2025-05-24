@@ -4,6 +4,7 @@ import urllib.parse
 import os
 import aiohttp
 import aiofiles
+from uuid import uuid4
 from info import *
 from Script import *
 from datetime import datetime, timedelta
@@ -17,9 +18,11 @@ from libgen_api_enhanced import LibgenSearch
 lg = LibgenSearch()
 logger = logging.getLogger(__name__)
 
-# Concurrency control
+# Concurrency control and cache
 USER_LOCKS = defaultdict(asyncio.Lock)
 LAST_PROGRESS_UPDATE = defaultdict(lambda: (0, datetime.min))
+search_cache = {}
+RESULTS_PER_PAGE = 10
 
 def escape_markdown(text: str) -> str:
     escape_chars = r"_*[]()~`>#+-=|{}.!"
@@ -33,19 +36,38 @@ async def libgen_search(query: str):
         await asyncio.sleep(e.value + 2)
         return lg.search_title_filtered(query, filters={}, exact_match=True)
 
-async def create_search_buttons(results: list, query: str):
-    """Create inline keyboard markup for search results"""
-    encoded_query = urllib.parse.quote(query)
+async def create_search_buttons(results: list, search_key: str, page: int):
+    """Create paginated inline keyboard markup"""
+    total = len(results)
+    total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+    
+    start_idx = (page - 1) * RESULTS_PER_PAGE
+    end_idx = start_idx + RESULTS_PER_PAGE
+    page_results = results[start_idx:end_idx]
+
     buttons = []
-    for idx, result in enumerate(results[:10], 1):
+    for idx, result in enumerate(page_results, start=1):
+        global_idx = start_idx + idx - 1
         title = result['Title'][:35] + "..." if len(result['Title']) > 35 else result['Title']
-        callback_data = f"lgdl_{encoded_query}_{idx-1}"
+        callback_data = f"lgdl_{search_key}_{global_idx}"
         buttons.append([
             InlineKeyboardButton(
                 f"{result['Extension'].upper()} ~{result['Size']} - {title}",
                 callback_data=callback_data
             )
         ])
+
+    # Pagination controls
+    pagination = []
+    if page > 1:
+        pagination.append(InlineKeyboardButton("⌫ Back", callback_data=f"lgpage_{search_key}_{page-1}"))
+    pagination.append(InlineKeyboardButton(f"{page}/{total_pages}", callback_data="pages"))
+    if page < total_pages:
+        pagination.append(InlineKeyboardButton("Next ➪", callback_data=f"lgpage_{search_key}_{page+1}"))
+    
+    if pagination:
+        buttons.append(pagination)
+
     return InlineKeyboardMarkup(buttons)
 
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
@@ -143,7 +165,7 @@ async def log_download(client, temp_path: str, book: dict, callback_query):
 
 @Client.on_message(filters.command('search') & filters.private)
 async def handle_search_command(client, message):
-    """Handle /search command"""
+    """Handle /search command with pagination"""
     try:
         query = message.text.split(' ', 1)[1]
         progress_msg = await message.reply("🔍 Searching in The Torrent Servers of Magical Library...")
@@ -152,11 +174,22 @@ async def handle_search_command(client, message):
         if not results:
             return await progress_msg.edit("❌ No results found for your query.")
 
-        buttons = await create_search_buttons(results, query)
+        # Store results in cache
+        search_key = str(uuid4())
+        search_cache[search_key] = {
+            'results': results,
+            'query': query,
+            'time': datetime.now()
+        }
+
+        total = len(results)
+        buttons = await create_search_buttons(results, search_key, 1)
+        
         response = [
-            f"📚 Found {len(results)} results for <b>{query}</b>:",
+            f"📚 Found {total} results for <b>{query}</b>:",
             f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
             f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ ᴏғ Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
+            f"📑 Page 1/{(total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
         ]
 
         await progress_msg.edit(
@@ -172,26 +205,74 @@ async def handle_search_command(client, message):
         logger.error(f"Search error: {e}")
         await message.reply(f"❌ Search failed: {str(e)}")
 
+@Client.on_callback_query(filters.regex(r"^lgpage_"))
+async def handle_pagination(client, callback_query):
+    """Handle pagination callbacks"""
+    try:
+        data = callback_query.data.split('_')
+        search_key = data[1]
+        page = int(data[2])
+        
+        cached = search_cache.get(search_key)
+        if not cached:
+            await callback_query.answer("Search session expired!")
+            return
+
+        results = cached['results']
+        query = cached['query']
+        total = len(results)
+        total_pages = (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+
+        if page < 1 or page > total_pages:
+            await callback_query.answer("Invalid page!")
+            return
+
+        buttons = await create_search_buttons(results, search_key, page)
+        
+        response = [
+            f"📚 Found {total} results for <b>{query}</b>:",
+            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {callback_query.from_user.mention}",
+            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+            f"📑 Page {page}/{total_pages}"
+        ]
+
+        await callback_query.message.edit(
+            "\n".join(response),
+            reply_markup=buttons,
+            parse_mode=enums.ParseMode.HTML
+        )
+        await callback_query.answer()
+    except Exception as e:
+        logger.error(f"Pagination error: {e}")
+        await callback_query.answer("Error handling pagination!")
+
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_download_callback(client, callback_query):
     """Handle download callback queries"""
     user_id = callback_query.from_user.id
     async with USER_LOCKS[user_id]:
         try:
-            data_parts = callback_query.data.split("_", 2)
-            encoded_query, index = data_parts[1], int(data_parts[2])
-            original_query = urllib.parse.unquote(encoded_query)
+            data = callback_query.data.split('_')
+            search_key = data[1]
+            index = int(data[2])
             
-            await callback_query.answer("📥 Starting download...")
-            progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
-            
-            results = await libgen_search(original_query)
-            if not results or index >= len(results):
-                return await progress_msg.edit("❌ Book details not found.")
+            cached = search_cache.get(search_key)
+            if not cached:
+                await callback_query.answer("Session expired! Please search again")
+                return
+
+            results = cached['results']
+            if index >= len(results):
+                await callback_query.answer("Invalid selection!")
+                return
 
             book = results[index]
             if not (download_url := book.get('Direct_Download_Link')):
-                return await progress_msg.edit("❌ No direct download available for this book.")
+                await callback_query.answer("❌ No direct download available")
+                return
+
+            await callback_query.answer("📥 Starting download...")
+            progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
 
             # File handling
             clean_title = "".join(c if c.isalnum() else "_" for c in book['Title'])
