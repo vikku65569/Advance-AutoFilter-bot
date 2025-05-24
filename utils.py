@@ -261,7 +261,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
 
     return {
         "title": work.get("title"),
-        "votes": None,                           # no equivalent
+        "votes": work.get("edition_count"),                           # no equivalent
         "aka": list_to_str(work.get("alternate_titles") or []),
         "seasons": None,                         # not relevant
         "box_office": None,                      # not relevant
@@ -269,13 +269,12 @@ async def get_poster(query, bulk=False, id=False, file=None):
         "kind": "book",
         "imdb_id": work_key.split("/")[-1],      # e.g. "OL12345W"
         "cast": None,
-        "runtime": None,
-        "countries": None,
+        "runtime": work.get("number_of_pages"),
+        "countries": list_to_str(work.get("subject_places") or []),
         "certificates": None,
-        "languages": list_to_str([lang.get("key","").split("/")[-1] 
-                                  for lang in work.get("languages", [])]),
+        "languages": list_to_str([lang.get("key","").split("/")[-1] for lang in work.get("languages", [])]),
         "director": None,
-        "writer": list_to_str(work.get("authors", [])),
+        "writer": list_to_str([a.get("author", {}).get("key", "").split("/")[-1] for a in work.get("authors", [])]),
         "producer": None,
         "composer": None,
         "cinematographer": None,

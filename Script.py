@@ -259,7 +259,7 @@ Books Data:
 📆 Year: <a href={url}/releaseinfo>{year}</a>
 🌟 Rating: <a href={url}/ratings>{rating}</a> / 10 (based on {votes} user ratings.)
 ☀️ Languages : <code>{languages}</code>
-📀 RunTime: {runtime} Minutes
+📀 No of Pages : {runtime} 
 📆 Release Info : {release_date}
 🎛 Countries : <code>{countries}</code>
 
