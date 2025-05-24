@@ -255,7 +255,7 @@ File/Book/Audiobook ʀᴇǫᴜᴇꜱᴛ ꜰᴏʀᴍᴀᴛ 👇
 Books Data:
 
 <b>🏷 Title</b>: <a href={url}>{title}</a>
-🎭 Genres: {genres}
+🎭 Genres: {genres}]\n
 📆 Year: <a href={url}/releaseinfo>{year}</a>
 🌟 Rating: <a href={url}/ratings>{rating}</a> / 10 (based on {votes} user ratings.)
 ☀️ Languages : <code>{languages}</code>
