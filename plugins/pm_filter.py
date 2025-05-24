@@ -251,7 +251,7 @@ async def next_page(bot, query):
     await query.answer()
 
 @Client.on_callback_query(filters.regex(r"^spol"))
-async def advantage_spoll_choker(bot, query,reply_msg):
+async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
   #  if not movies:
@@ -271,10 +271,11 @@ async def advantage_spoll_choker(bot, query,reply_msg):
 
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
 
+            reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
-                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
+                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg, ai_search, k)
 
             else:
@@ -282,7 +283,7 @@ async def advantage_spoll_choker(bot, query,reply_msg):
                 reqstr = await bot.get_users(reqstr1)
 
                 try:
-                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'...")
+                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'in Library...")
 
                     results = await libgen_search(movie)
                     if results:
