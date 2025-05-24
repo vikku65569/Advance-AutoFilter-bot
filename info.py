@@ -51,8 +51,8 @@ FILE_STORE_CHANNEL = [int(ch) for ch in (environ.get('FILE_STORE_CHANNEL', '-100
 
 DB_CHANNEL = int(environ.get("DB_CHANNEL", "-1002509332985")) 
 SECONDARY_DB_CHANNEL = int(environ.get("SECONDARY_DB_CHANNEL", "-1002141494142")) #file chaneel 
-AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "360")) # Time in Seconds
-AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "6")) # Time in Minutes
+AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "30")) # Time in Seconds
+AUTO_DELETE_MIN = int(environ.get("AUTO_DELETE_MIN", "0.5")) # Time in Minutes
 
 # Website Info:
 WEBSITE_URL_MODE = bool(environ.get('WEBSITE_URL_MODE', True)) # Set True or False
@@ -111,7 +111,7 @@ IMDB = bool(environ.get('IMDB', False))
 AUTO_FFILTER = bool(environ.get('AUTO_FFILTER', True))
 AUTO_DELETE = bool(environ.get('AUTO_DELETE', True))
 LONG_IMDB_DESCRIPTION = bool(environ.get("LONG_IMDB_DESCRIPTION", False))
-SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", False))
+SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", True))
 MELCOW_NEW_USERS = bool(environ.get('MELCOW_NEW_USERS', True))
 PROTECT_CONTENT = bool(environ.get('PROTECT_CONTENT', False))
 PUBLIC_FILE_STORE = bool(environ.get('PUBLIC_FILE_STORE', False)) # Set True or False
