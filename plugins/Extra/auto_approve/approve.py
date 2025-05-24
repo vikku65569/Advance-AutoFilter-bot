@@ -178,11 +178,31 @@ async def auto_approve(client, message: ChatJoinRequest):
                 continue
             await asyncio.sleep(1) 
         await sts.delete()
-        k = await client.send_message(chat_id = message.from_user.id, text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-        await asyncio.sleep(600)
+
+       # 2️⃣ Send the attention notice with dynamic timing
+        k = await client.send_message(
+            chat_id=message.from_user.id,
+            text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+            parse_mode=enums.ParseMode.HTML,
+            disable_web_page_preview=True
+        )
+
+        # 3️⃣ Wait for the configured auto-delete interval
+        await asyncio.sleep(AUTO_DELETE_TIME)
+
+        # 4️⃣ Delete any temporary messages/files
         for x in filesarr:
-            await x.delete()
-        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")  
+            try:
+                await x.delete()
+            except:
+                pass
+
+        # 5️⃣ Edit the original notice into the “deleted” confirmation
+        await k.edit_text(
+            script.FILE_DELETED_MSG,
+            parse_mode=enums.ParseMode.HTML
+        )
+
         return
         
     elif data.split("-", 1)[0] == "DSTORE":
@@ -246,11 +266,31 @@ async def auto_approve(client, message: ChatJoinRequest):
             filesarr.append(p)
             await asyncio.sleep(1)
         await sts.delete()
-        k = await client.send_message(chat_id = message.from_user.id, text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-        await asyncio.sleep(600)
+
+        # 1️⃣ Send the attention notice (uses your AUTO_DELETE_MSG template)
+        k = await client.send_message(
+            chat_id=message.from_user.id,
+            text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+            parse_mode=enums.ParseMode.HTML,
+            disable_web_page_preview=True
+        )
+
+        # 2️⃣ Wait for the configured delete interval
+        await asyncio.sleep(AUTO_DELETE_TIME)
+
+        # 3️⃣ Remove any temporary file messages
         for x in filesarr:
-            await x.delete()
-        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
+            try:
+                await x.delete()
+            except:
+                pass
+
+        # 4️⃣ Edit the original notice into the “deleted” confirmation
+        await k.edit_text(
+            script.FILE_DELETED_MSG,
+            parse_mode=enums.ParseMode.HTML
+        )
+
         return
 
     elif data.split("-", 1)[0] == "verify":
@@ -353,12 +393,31 @@ async def auto_approve(client, message: ChatJoinRequest):
                 reply_markup=reply_markup
             )
             filesarr.append(msg)
-        k = await client.send_message(chat_id = message.from_user.id, text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-        await asyncio.sleep(600)
-        for x in filesarr:
-            await x.delete()
-        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")
-        return    
+
+            # 2️⃣ Send the attention notice using your AUTO_DELETE_MSG template
+            k = await client.send_message(
+                chat_id=message.from_user.id,
+                text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+
+            # 3️⃣ Wait for the configured auto-delete interval
+            await asyncio.sleep(AUTO_DELETE_TIME)
+
+            # 4️⃣ Delete all file messages you stored
+            for x in filesarr:
+                try:
+                    await x.delete()
+                except:
+                    pass
+
+            # 5️⃣ Edit the original notice into the “successfully deleted” confirmation
+            await k.edit_text(
+                script.FILE_DELETED_MSG,
+                parse_mode=enums.ParseMode.HTML
+            )
+            return   
 
     elif data.startswith("files"):
         user = message.from_user.id
@@ -427,11 +486,29 @@ async def auto_approve(client, message: ChatJoinRequest):
                     return
             await msg.edit_caption(caption=f_caption)
             btn = [[InlineKeyboardButton("✅ ɢᴇᴛ ғɪʟᴇ ᴀɢᴀɪɴ ✅", callback_data=f'del#{file_id}')]]
-            k = await msg.reply(text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-            await asyncio.sleep(600)
+
+            # 3️⃣ Send the timed warning using your template
+            k = await msg.reply(
+                text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+                parse_mode=enums.ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+
+            # 4️⃣ Wait the configured auto-delete interval
+            await asyncio.sleep(AUTO_DELETE_TIME)
+
+            # 5️⃣ Delete the user’s original message
             await msg.delete()
-            await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴀɢᴀɪɴ ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ</b>",reply_markup=InlineKeyboardMarkup(btn))
+
+            # 6️⃣ Edit the warning into the “deleted” confirmation and attach retry button
+            await k.edit_text(
+                script.FILE_DELETED_MSG + "\n\nIf you want it again, click below:",
+                reply_markup=InlineKeyboardMarkup(btn),
+                parse_mode=enums.ParseMode.HTML
+            )
+
             return
+        
         except:
             pass
         return await message.reply('No such file exist.')
@@ -475,9 +552,26 @@ async def auto_approve(client, message: ChatJoinRequest):
         protect_content=True if pre == 'filep' else False,
         reply_markup=reply_markup
     )
+
     btn = [[InlineKeyboardButton("✅ ɢᴇᴛ ғɪʟᴇ ᴀɢᴀɪɴ ✅", callback_data=f'del#{file_id}')]]
-    k = await msg.reply(text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-    await asyncio.sleep(600)
+    # 3️⃣ Send the warning using your AUTO_DELETE_MSG template
+    k = await msg.reply(
+        text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+        parse_mode=enums.ParseMode.HTML,
+        disable_web_page_preview=True
+    )
+
+    # 4️⃣ Wait the configured interval
+    await asyncio.sleep(AUTO_DELETE_TIME)
+
+    # 5️⃣ Remove the user’s original message
     await msg.delete()
-    await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ɪғ ʏᴏᴜ ᴡᴀɴᴛ ᴀɢᴀɪɴ ᴛʜᴇɴ ᴄʟɪᴄᴋ ᴏɴ ʙᴇʟᴏᴡ ʙᴜᴛᴛᴏɴ</b>",reply_markup=InlineKeyboardMarkup(btn))
-    return   
+
+    # 6️⃣ Edit the warning into the “deleted” notice, adding the retry button
+    await k.edit_text(
+        script.FILE_DELETED_MSG + "\n\nIf you want it again, click below:",
+        reply_markup=InlineKeyboardMarkup(btn),
+        parse_mode=enums.ParseMode.HTML
+    )
+
+    return 
