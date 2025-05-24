@@ -202,7 +202,16 @@ async def get_poster(query, bulk=False, id=False, file=None):
         params = {"q": title, "limit": 20}
         async with aiohttp.ClientSession() as sess:
             async with sess.get(OPENLIB_SEARCH_URL, params=params) as resp:
-                data = await resp.json()
+                if resp.status != 200:
+                    logger.error(f"OpenLibrary search failed: HTTP {resp.status}")
+                    return None
+                try:
+                    data = await resp.json()
+                except Exception as e:
+                    logger.error(f"OpenLibrary search JSON parse error: {e}")
+                    txt = await resp.text()
+                    logger.debug(f"Search raw response:\n{txt}")
+                    return None
         docs = data.get("docs", [])
         if not docs:
             return None
@@ -223,7 +232,17 @@ async def get_poster(query, bulk=False, id=False, file=None):
     # 4) Fetch full work details
     async with aiohttp.ClientSession() as sess:
         async with sess.get(OPENLIB_WORK_URL.format(key=work_key)) as resp:
-            work = await resp.json()
+            if resp.status != 200:
+                logger.error(f"OpenLibrary detail fetch failed: HTTP {resp.status}")
+                return None
+            try:
+                work = await resp.json()
+            except Exception as e:
+                logger.error(f"OpenLibrary detail JSON parse error: {e}")
+                txt = await resp.text()
+                logger.debug(f"Detail raw response:\n{txt}")
+                return None
+
     if not work:
         return None
 
