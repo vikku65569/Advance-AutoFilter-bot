@@ -186,10 +186,9 @@ async def handle_search_command(client, message):
         buttons = await create_search_buttons(results, search_key, 1)
         
         response = [
-            f"📚 Found {total} results for <b>{query}</b>:",
-            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {message.from_user.mention if message.from_user else 'Unknown User'}",
-            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ ᴏғ Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs",
-            f"📑 Page 1/{(total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+            f"📚<b> Found </b> {total} results for <b>{query}</b>:",
+            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ : {message.from_user.mention if message.from_user else 'Unknown User'}",
+            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ ᴏғ Lɪʙʀᴀʀʏ Gᴇɴᴇsɪs"
         ]
 
         await progress_msg.edit(
