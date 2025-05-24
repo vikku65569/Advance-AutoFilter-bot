@@ -15,6 +15,7 @@ from database.join_reqs import JoinReqs
 from bs4 import BeautifulSoup
 from shortzy import Shortzy
 
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 join_db = JoinReqs
@@ -91,85 +92,183 @@ async def is_subscribed(bot, query):
                 return True
         return False
 
+# async def get_poster(query, bulk=False, id=False, file=None):
+#     if not id:
+#         query = (query.strip()).lower()
+#         title = query
+#         year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
+#         if year:
+#             year = list_to_str(year[:1])
+#             title = (query.replace(year, "")).strip()
+#         elif file is not None:
+#             year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
+#             if year:
+#                 year = list_to_str(year[:1]) 
+#         else:
+#             year = None
+#         movieid = imdb.search_movie(title.lower(), results=10)
+#         if not movieid:
+#             return None
+#         if year:
+#             filtered=list(filter(lambda k: str(k.get('year')) == str(year), movieid))
+#             if not filtered:
+#                 filtered = movieid
+#         else:
+#             filtered = movieid
+#         movieid=list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered))
+#         if not movieid:
+#             movieid = filtered
+#         if bulk:
+#             return movieid
+#         movieid = movieid[0].movieID
+#     else:
+#         movieid = query
+#     movie = imdb.get_movie(movieid)
+#     if not movie:
+#         return None
+#     if movie.get("original air date"):
+#         date = movie["original air date"]
+#     elif movie.get("year"):
+#         date = movie.get("year")
+#     else:
+#         date = "N/A"
+#     plot = ""
+#     if not LONG_IMDB_DESCRIPTION:
+#         plot = movie.get('plot')
+#         if plot and len(plot) > 0:
+#             plot = plot[0]
+#     else:
+#         plot = movie.get('plot outline')
+#     if plot and len(plot) > 800:
+#         plot = plot[0:800] + "..."
+
+#     return {
+#         'title': movie.get('title'),
+#         'votes': movie.get('votes'),
+#         "aka": list_to_str(movie.get("akas")),
+#         "seasons": movie.get("number of seasons"),
+#         "box_office": movie.get('box office'),
+#         'localized_title': movie.get('localized title'),
+#         'kind': movie.get("kind"),
+#         "imdb_id": f"tt{movie.get('imdbID')}",
+#         "cast": list_to_str(movie.get("cast")),
+#         "runtime": list_to_str(movie.get("runtimes")),
+#         "countries": list_to_str(movie.get("countries")),
+#         "certificates": list_to_str(movie.get("certificates")),
+#         "languages": list_to_str(movie.get("languages")),
+#         "director": list_to_str(movie.get("director")),
+#         "writer":list_to_str(movie.get("writer")),
+#         "producer":list_to_str(movie.get("producer")),
+#         "composer":list_to_str(movie.get("composer")) ,
+#         "cinematographer":list_to_str(movie.get("cinematographer")),
+#         "music_team": list_to_str(movie.get("music department")),
+#         "distributors": list_to_str(movie.get("distributors")),
+#         'release_date': date,
+#         'year': movie.get('year'),
+#         'genres': list_to_str(movie.get("genres")),
+#         'poster': movie.get('full-size cover url'),
+#         'plot': plot,
+#         'rating': str(movie.get("rating")),
+#         'url':f'https://www.imdb.com/title/tt{movieid}'
+#     }
+
+
+OPENLIB_SEARCH_URL = "https://openlibrary.org/search.json"
+OPENLIB_WORK_URL   = "https://openlibrary.org{key}.json"
+COVER_URL_TEMPLATE = "https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
+
 async def get_poster(query, bulk=False, id=False, file=None):
+    """
+    Swapped to Open Library book lookup, but preserves signature and return keys.
+    - query: title string or (if id=True) an Open Library work key like '/works/OL12345W'
+    - bulk: if True, returns raw search docs
+    - file: filename to extract year if present
+    """
     if not id:
-        query = (query.strip()).lower()
-        title = query
-        year = re.findall(r'[1-2]\d{3}$', query, re.IGNORECASE)
-        if year:
-            year = list_to_str(year[:1])
-            title = (query.replace(year, "")).strip()
-        elif file is not None:
-            year = re.findall(r'[1-2]\d{3}', file, re.IGNORECASE)
-            if year:
-                year = list_to_str(year[:1]) 
+        # Normalize and extract year exactly as before
+        query = query.strip()
+        title = query.lower()
+        year_match = re.findall(r'[1-2]\d{3}$', title)
+        if year_match:
+            year = year_match[0]
+            title = title.replace(year, "").strip()
+        elif file:
+            ym = re.findall(r'[1-2]\d{3}', file)
+            year = ym[0] if ym else None
         else:
             year = None
-        movieid = imdb.search_movie(title.lower(), results=10)
-        if not movieid:
+
+        # 1) Search Open Library
+        params = {"q": title, "limit": 20}
+        async with aiohttp.ClientSession() as sess:
+            async with sess.get(OPENLIB_SEARCH_URL, params=params) as resp:
+                data = await resp.json()
+        docs = data.get("docs", [])
+        if not docs:
             return None
+
+        # 2) Optional year filter
         if year:
-            filtered=list(filter(lambda k: str(k.get('year')) == str(year), movieid))
-            if not filtered:
-                filtered = movieid
-        else:
-            filtered = movieid
-        movieid=list(filter(lambda k: k.get('kind') in ['movie', 'tv series'], filtered))
-        if not movieid:
-            movieid = filtered
+            filtered = [d for d in docs if str(d.get("first_publish_year")) == year]
+            docs = filtered or docs
+
         if bulk:
-            return movieid
-        movieid = movieid[0].movieID
+            return docs
+
+        # 3) Pick the first work key
+        work_key = docs[0].get("key")  # e.g. "/works/OL12345W"
     else:
-        movieid = query
-    movie = imdb.get_movie(movieid)
-    if not movie:
+        work_key = query  # assume it's already a key
+
+    # 4) Fetch full work details
+    async with aiohttp.ClientSession() as sess:
+        async with sess.get(OPENLIB_WORK_URL.format(key=work_key)) as resp:
+            work = await resp.json()
+    if not work:
         return None
-    if movie.get("original air date"):
-        date = movie["original air date"]
-    elif movie.get("year"):
-        date = movie.get("year")
-    else:
-        date = "N/A"
-    plot = ""
-    if not LONG_IMDB_DESCRIPTION:
-        plot = movie.get('plot')
-        if plot and len(plot) > 0:
-            plot = plot[0]
-    else:
-        plot = movie.get('plot outline')
-    if plot and len(plot) > 800:
-        plot = plot[0:800] + "..."
+
+    # 5) Extract description
+    desc = work.get("description") or ""
+    if isinstance(desc, dict):
+        desc = desc.get("value", "")
+    if len(desc) > 800:
+        desc = desc[:800] + "..."
+
+    # 6) Build return dict using *exact* same keys as your movie version
+    cover_ids = work.get("covers", [])
+    poster_url = COVER_URL_TEMPLATE.format(cover_id=cover_ids[0]) if cover_ids else None
 
     return {
-        'title': movie.get('title'),
-        'votes': movie.get('votes'),
-        "aka": list_to_str(movie.get("akas")),
-        "seasons": movie.get("number of seasons"),
-        "box_office": movie.get('box office'),
-        'localized_title': movie.get('localized title'),
-        'kind': movie.get("kind"),
-        "imdb_id": f"tt{movie.get('imdbID')}",
-        "cast": list_to_str(movie.get("cast")),
-        "runtime": list_to_str(movie.get("runtimes")),
-        "countries": list_to_str(movie.get("countries")),
-        "certificates": list_to_str(movie.get("certificates")),
-        "languages": list_to_str(movie.get("languages")),
-        "director": list_to_str(movie.get("director")),
-        "writer":list_to_str(movie.get("writer")),
-        "producer":list_to_str(movie.get("producer")),
-        "composer":list_to_str(movie.get("composer")) ,
-        "cinematographer":list_to_str(movie.get("cinematographer")),
-        "music_team": list_to_str(movie.get("music department")),
-        "distributors": list_to_str(movie.get("distributors")),
-        'release_date': date,
-        'year': movie.get('year'),
-        'genres': list_to_str(movie.get("genres")),
-        'poster': movie.get('full-size cover url'),
-        'plot': plot,
-        'rating': str(movie.get("rating")),
-        'url':f'https://www.imdb.com/title/tt{movieid}'
+        "title": work.get("title"),
+        "votes": None,                           # no equivalent
+        "aka": list_to_str(work.get("alternate_titles") or []),
+        "seasons": None,                         # not relevant
+        "box_office": None,                      # not relevant
+        "localized_title": None,
+        "kind": "book",
+        "imdb_id": work_key.split("/")[-1],      # e.g. "OL12345W"
+        "cast": None,
+        "runtime": None,
+        "countries": None,
+        "certificates": None,
+        "languages": list_to_str([lang.get("key","").split("/")[-1] 
+                                  for lang in work.get("languages", [])]),
+        "director": None,
+        "writer": list_to_str(work.get("authors", [])),
+        "producer": None,
+        "composer": None,
+        "cinematographer": None,
+        "music_team": None,
+        "distributors": None,
+        "release_date": work.get("created", {}).get("value", ""),
+        "year": work.get("first_publish_date") or work.get("first_publish_year"),
+        "genres": list_to_str(work.get("subjects") or []),
+        "poster": poster_url,
+        "plot": desc,
+        "rating": None,                          # no rating
+        "url": f"https://openlibrary.org{work_key}"
     }
+
 
 async def broadcast_messages(user_id, message):
     try:
