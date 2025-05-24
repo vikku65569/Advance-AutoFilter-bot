@@ -233,6 +233,7 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
     if imdb:
         caption = IMDB_TEMPLATE.format(
             qurey = imdb['title'],
+            query = imdb['title'],
             title = imdb['title'],
             votes = imdb['votes'],
             aka = imdb["aka"],
