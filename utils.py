@@ -207,7 +207,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
                     return None
                 try:
                     data = await resp.json()
-                    print(json.dumps(work, indent=2, ensure_ascii=False))
+                    print(json.dumps(data, indent=2, ensure_ascii=False))
                 except Exception as e:
                     logger.error(f"OpenLibrary search JSON parse error: {e}")
                     txt = await resp.text()
