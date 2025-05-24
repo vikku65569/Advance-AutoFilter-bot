@@ -67,7 +67,7 @@ Join my [Update Channel](https://telegram.dog/tactition) for more updates regard
 • /delete - Delete a specific file from index
 • /info - Get user info
 • /id - Get Telegram IDs
-• /imdb - Fetch info from IMDb
+• /library - Fetch info from library of books
 • /search - Search from various sources
 • /users - Get list of users and IDs
 • /chats - Get list of chats and IDs

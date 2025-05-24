@@ -2900,6 +2900,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|book(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\book|any(one)|with\ssubtitle(s)?)",
         "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
     query = query.strip() + " book"
+
+    # search for the book in library
     try:
         movies = await get_poster(mv_rqst, bulk=True)
     except Exception as e:
@@ -2915,6 +2917,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         await asyncio.sleep(30)
         await k.delete()
         return
+
     
     movielist = []
     if not movies:
@@ -2942,11 +2945,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         movienamelist += [movie.get('title') for movie in movies]
 
         for Zahid in movienamelist:
-            try:
-                mv_rqst = mv_rqst.capitalize()
-            except:
-                pass
-            if mv_rqst.startswith(Zahid[0]):
+            
+            if mv_rqst.startswith(Zahid):
                 await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
 
                 results = await libgen_search(Zahid)

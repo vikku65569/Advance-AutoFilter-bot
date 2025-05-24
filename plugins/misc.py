@@ -155,7 +155,7 @@ async def imdb_search(client, message):
             btn.append([InlineKeyboardButton(text=text, callback_data=callback_data)])
 
         await k.edit(
-            "Here is what I found:",
+            "Here is what I found: for the query: <b>{}</b> \n Click on a book to get details".format(title),
             reply_markup=InlineKeyboardMarkup(btn)
         )
     else:
