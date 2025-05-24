@@ -6,8 +6,9 @@ from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant, Media
 from pyrogram.errors import RPCError
 from info import *
 from utils import extract_user, get_file_id, get_poster, last_online 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+import pytz
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -174,7 +175,12 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
                 )
             ]
         ]
+    
+    cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
+    time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000)))
+    remaining_seconds = "{:.2f}".format(time_difference.total_seconds())    
     message = quer_y.message.reply_to_message or quer_y.message
+
     if imdb:
         caption = IMDB_TEMPLATE.format(
             qurey = imdb['title'],
@@ -205,6 +211,8 @@ async def imdb_callback(bot: Client, quer_y: CallbackQuery):
             plot = imdb['plot'],
             rating = imdb['rating'],
             url = imdb['url'],
+             # 👉 add this line for remanining time in template
+            remaining_seconds = remaining_seconds,
             **locals()
         )
     else:
