@@ -2931,7 +2931,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         return
     
     movielist += [movie.get('title') for movie in movies]
-    movielist += [f"{movie.get('title')} {movie.get('year')}" for movie in movies]
+    movielist += [f"{movie.get('title')}"for movie in movies]
     SPELL_CHECK[mv_id] = movielist
 
 
