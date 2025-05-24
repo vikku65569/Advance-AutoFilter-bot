@@ -231,13 +231,13 @@ Example:#request Rich Dad Poor Dad or /request Rich Dad Poor Dad Audiobook </b>"
 🫣 For File Join First Then Click On Try Again Button 😅"""
 
     NORSLTS = """ 
-★ #𝗡𝗼𝗥𝗲𝘀𝘂𝗹𝘁𝘀 ★
+★User Got #𝗡𝗼𝗥𝗲𝘀𝘂𝗹𝘁𝘀  ★
 
 𝗜𝗗 <b>: {}</b>
 
 𝗡𝗮𝗺𝗲 <b>: {}</b>
 
-𝗠𝗲𝘀𝘀𝗮𝗴𝗲 <b>: {}</b>"""
+𝐛𝐨𝐨𝐤 𝐬𝐞𝐚𝐫𝐜𝐡 <b>: {}</b>"""
 
     CAPTION = """<b>📂 ғɪʟᴇɴᴀᴍᴇ : {file_name}
 

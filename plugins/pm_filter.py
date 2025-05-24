@@ -325,7 +325,7 @@ async def advantage_spoll_choker(bot, query):
                     await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
 
                 k = await query.message.edit(script.MVE_NT_FND)
-                await asyncio.sleep(10)
+                await asyncio.sleep(60)
                 await k.delete()
 
 # Year 
@@ -2926,7 +2926,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
         k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
-        await asyncio.sleep(30)
+        await asyncio.sleep(60)
         await k.delete()
         return
     
@@ -2984,7 +2984,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         if NO_RESULTS_MSG :
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
         k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
-        await asyncio.sleep(30)
+        await asyncio.sleep(60)
         await k.delete()
         return
     
