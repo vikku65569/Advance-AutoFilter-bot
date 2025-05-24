@@ -519,12 +519,39 @@ async def start(client, message):
             except:
                 continue
             await asyncio.sleep(1) 
+
         await sts.delete()
-        k = await client.send_message(chat_id = message.from_user.id, text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
-        await asyncio.sleep(600)
+
+        # k = await client.send_message(chat_id = message.from_user.id, text=f"<b>Attention Mate</b> \n\n ᴛʜɪs ᴍᴇssᴀɢᴇ ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ ɪɴ <b><u>10 mins</u></b><i> ᴅᴜᴇ ᴛᴏ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs</i> \n\n<b><i>ᴘʟᴇᴀsᴇ ғᴏʀᴡᴀʀᴅ ᴛʜɪs ᴍᴇssᴀɢᴇ ᴛᴏ ʏᴏᴜʀ sᴀᴠᴇᴅ ᴍᴇssᴀɢᴇs ᴏʀ ᴀɴʏ ᴘʀɪᴠᴀᴛᴇ ᴄʜᴀᴛ.</i></b>")
+        # await asyncio.sleep(600)
+
+        # for x in filesarr:
+        #     await x.delete()
+        # await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")  
+        # return
+    
+        k = await client.send_message(
+        chat_id=message.from_user.id,
+        text=script.AUTO_DELETE_MSG.format(AUTO_DELETE_MIN),
+        parse_mode=enums.ParseMode.HTML,
+        disable_web_page_preview=True
+        )
+        # Wait the configured number of seconds
+        await asyncio.sleep(AUTO_DELETE_TIME)
+
+        # Delete any temporary files/messages
         for x in filesarr:
-            await x.delete()
-        await k.edit_text("<b>✅ ʏᴏᴜʀ ᴍᴇssᴀɢᴇ ɪs sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ</b>")  
+            try:
+                await x.delete()
+            except:
+                pass
+
+        # Edit the original notice to the “successfully deleted” template
+        await k.edit_text(
+            script.FILE_DELETED_MSG,
+            parse_mode=enums.ParseMode.HTML
+        )
+
         return
 
     elif data.split("-", 1)[0] == "DSTORE":
