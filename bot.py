@@ -65,18 +65,7 @@ async def start():
         await ZahidBot.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
     except:
         print("Make Your Bot Admin In Log Channel With Full Rights")
-
-    for ch in CHANNELS:
-        try:
-            k = await ZahidBot.send_message(chat_id=ch, text="**Bot Restarted**")
-            await k.delete()
-        except:
-            print("Make Your Bot Admin In File Channels With Full Rights")
-            
-    try:
-        print("Ensure Bot is admin in Auth Channel Otherwise Everyting is Set")
-    except:
-        print("Make Your Bot Admin In Force Subscribe Channel With Full Rights")
+        
     if CLONE_MODE == True:
         print("Restarting All Clone Bots.......")
         await restart_bots()
