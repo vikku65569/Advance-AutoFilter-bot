@@ -2863,6 +2863,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         button = [[
             InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
+
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
         k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
@@ -2876,28 +2877,67 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         button = [[
             InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
+
         if NO_RESULTS_MSG:
             await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
         k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
         await asyncio.sleep(30)
         await k.delete()
         return
+    
     movielist += [movie.get('title') for movie in movies]
     movielist += [f"{movie.get('title')} {movie.get('year')}" for movie in movies]
     SPELL_CHECK[mv_id] = movielist
+
+
     if AI_SPELL_CHECK == True and vj_search == True:
         vj_search_new = False
         vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling.</i></b>")
         movienamelist = []
         movienamelist += [movie.get('title') for movie in movies]
+
         for Zahid in movienamelist:
             try:
                 mv_rqst = mv_rqst.capitalize()
             except:
                 pass
             if mv_rqst.startswith(Zahid[0]):
-                await auto_filter(client, Zahid, msg, reply_msg, vj_search_new)
-                break
+                
+                try:
+                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
+
+                    results = await libgen_search(Zahid)
+
+                    if results:
+                        search_key = str(uuid4())
+                        search_cache[search_key] = {
+                            'results': results,
+                            'query': Zahid,
+                            'time': datetime.now()
+                        }
+
+                        buttons = await create_search_buttons(results, search_key, 1)
+
+                        response = [
+                            f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
+                            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
+                            f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                            f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+                        ]
+
+                        await reply_msg.edit(
+                            "\n".join(response),
+                            reply_markup=buttons,
+                            parse_mode=enums.ParseMode.HTML
+                        )
+                        break  # Stop further processing once LibGen result is shown
+
+                except Exception as e:
+                    logger.error(f"LibGen fallback error: {e}")
+                    await reply_msg.edit_text(f"**⚠️ LibGen Search Failed.**\nError: `{e}`", parse_mode=enums.ParseMode.MARKDOWN)
+                    break
+
+            
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
             InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
