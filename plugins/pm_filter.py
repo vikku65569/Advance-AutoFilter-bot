@@ -16,7 +16,7 @@ from database.connections_mdb import mydb, active_connection, all_connections, d
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
 from urllib.parse import quote_plus
 from Zahid.util.file_properties import get_name, get_hash, get_media_file_size
-from plugins.libgen_plugin import handle_libgen_search
+from plugins.libgen_plugin import *
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
@@ -2627,7 +2627,8 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
                 else:
                     await reply_msg.edit_text(f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**");
                     await reply_msg.edit_text(f"🔎 Doing a deep search for '{name}'... Please wait.")
-                    await handle_libgen_search(client, name)
+                    await handle_search_command(client, name)
+
 
         else:
             return
