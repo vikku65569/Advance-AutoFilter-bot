@@ -212,29 +212,36 @@ def is_book_url(url: str) -> bool:
         return True
     return False
 
+
+def count_numbers(text: str) -> int:
+    return sum(c.isdigit() for c in text)
+
 async def get_google_titles(query: str, limit=5) -> list:
-    results = list(search(query + " book", num_results=limit * 2))  # grab more, filter later
+    results = list(search(query + " book", num_results=limit * 2))
     titles = []
-    
+
     for url in results:
         if not is_book_url(url):
             continue
 
         parts = url.rstrip('/').split("/")
         last_part = parts[-1] if parts else ""
-        
-        # Clean up URL slug into readable title
+
         raw_title = last_part.replace(".html", "")
         title = re.sub(r"[-+._%20&$#@!]", " ", raw_title)
         title = re.sub(r"\s+", " ", title).strip()
 
-        # Skip junk titles (like product IDs or numbers)
+        # If more than 2 digits, strip out _all_ digits from the string
+        if count_numbers(title) > 2:
+            title = re.sub(r"\d", "", title)
+            title = re.sub(r"\s+", " ", title).strip()
+
+        # Now skip if it's still junk (too short or fully numeric)
         if len(title.split()) < 2 or title.isdigit():
             continue
-        
-        titles.append(title.title())
 
+        titles.append(title.title())
         if len(titles) >= limit:
             break
-    
+
     return titles

@@ -2934,15 +2934,28 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     
     movielist = []
     if not movies:
-    # Use Google to find suggested book titles
-        try:
-            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google api.</i></b>")
-            google_titles = await get_google_titles(mv_rqst)
+        google_titles_api = []
+        google_titles_fallback = []
 
+        try:
+            vj_ai_msg = await reply_msg.edit_text(
+                "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google Books API...</i></b>"
+            )
+            google_titles_api = await get_google_titles(mv_rqst)
         except Exception as e:
-            google_titles = await fetch_google_titles(mv_rqst)
-            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google Search.</i></b>")
+            logger.warning("Google Books API failed", exc_info=True)
+
+        try:
+            if not google_titles_api:
+                vj_ai_msg = await reply_msg.edit_text(
+                    "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google Search...</i></b>"
+                )
+            google_titles_fallback = await fetch_google_titles(mv_rqst)
+        except Exception as e:
             logger.error("Google fallback failed", exc_info=True)
+
+        # Combine and deduplicate results
+        google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
 
         if google_titles:
             SPELL_CHECK[mv_id] = google_titles
@@ -2956,19 +2969,20 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 text=script.CUDNT_FND.format(mv_rqst),
                 reply_markup=InlineKeyboardMarkup(btn)
             )
+
             try:
-                if settings['auto_delete']:
+                if settings.get('auto_delete'):
                     await asyncio.sleep(600)
                     await spell_check_del.delete()
             except KeyError:
                 grpid = await active_connection(str(msg.from_user.id))
                 await save_group_settings(grpid, 'auto_delete', True)
                 settings = await get_settings(msg.chat.id)
-                if settings['auto_delete']:
+                if settings.get('auto_delete'):
                     await asyncio.sleep(600)
                     await spell_check_del.delete()
-            return
-
+                return
+        
         else:
             # No Google results either, fallback to plain Google button
             reqst_gle = mv_rqst.replace(" ", "+")
