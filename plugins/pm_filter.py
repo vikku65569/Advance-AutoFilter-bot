@@ -2954,12 +2954,13 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 )
                 await asyncio.sleep(2)
 
-            google_titles_fallback = await fetch_google_titles(mv_rqst)
+            # google_titles_fallback = await fetch_google_titles(mv_rqst)
         except Exception as e:
             logger.error("Google fallback failed", exc_info=True)
 
         # Combine and deduplicate results
-        google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
+        google_titles = list(dict.fromkeys(google_titles_api))
+        # google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
 
         if google_titles:
             SPELL_CHECK[mv_id] = google_titles
