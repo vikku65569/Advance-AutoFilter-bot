@@ -269,9 +269,8 @@ async def advantage_spoll_choker(bot, query):
     movie = re.sub(r"[:\-]", " ", movie)
     movie = re.sub(r"\s+", " ", movie).strip()
     await query.answer(script.TOP_ALRT_MSG)
-    print(f"reached global filtering {movie} ...")          
     gl = await global_filters(bot, query.message, text=movie)
-    print(f"ended global filtering {movie}  ...")          
+    
 
 
     if gl == False:
@@ -304,7 +303,9 @@ async def advantage_spoll_choker(bot, query):
                 k = (movie, files, offset, total_results)
                 ai_search = True
                 reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
-                await auto_filter(bot, movie, query, reply_msg, ai_search, k)
+                await auto_filter(bot, movie, query, reply_msg, ai_search)
+
+               
 
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
