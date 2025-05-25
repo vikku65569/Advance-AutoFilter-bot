@@ -196,6 +196,8 @@ async def fetch_google_titles(query: str, limit=5) -> list[str]:
                 title = volume_info.get("title", "")
                 if title:
                     clean_title = re.sub(r"\s+", " ", title.strip()).title()
+                    clean_title = re.sub(r"[^a-zA-Z0-9 ]", "", title)  # Remove all special characters
+                    clean_title = re.sub(r"\s+", " ", clean_title.strip()).title()
                     titles.append(clean_title)
 
     return titles
