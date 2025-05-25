@@ -8,10 +8,9 @@ from pymongo.errors import DuplicateKeyError
 from info import FILE_DB_URI, SEC_FILE_DB_URI, DATABASE_NAME, COLLECTION_NAME, MULTIPLE_DATABASE, USE_CAPTION_FILTER, MAX_B_TN
 from googlesearch import search
 import aiohttp
-
 from bs4 import BeautifulSoup
 from fuzzywuzzy import fuzz
-from urllib.parse import urlparse
+from urllib.parse import urlparse,unquote
 
 
 # First Database For File Saving 
@@ -202,80 +201,57 @@ async def fetch_google_titles(query: str, limit=5) -> list[str]:
     return titles
 
 
-BOOK_DOMAINS = [
-    "goodreads.com", "openlibrary.org", "books.google.com",
-    "bookbub.com", "bookdepository.com", "amazon.com", "kobo.com",
-    "barnesandnoble.com", "bookshop.org", "storytel.com"
-]
-
-def is_book_url(url: str) -> bool:
-    """Improved book URL detection"""
-    parsed = urlparse(url)
-    # Check domain first
-    if any(domain in parsed.netloc for domain in BOOK_DOMAINS):
-        return True
-    # Check path patterns
-    path = parsed.path.lower()
-    return any(part in path for part in ["book", "novel", "title", "work"])
-
-async def fetch_page_title(url: str) -> str:
-    """Fetch HTML page title from URL"""
-    try:
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(10)) as session:
-            async with session.get(url, allow_redirects=True) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    title = soup.title.string.strip() if soup.title else ""
-                    # Clean common title suffixes
-                    title = re.sub(r"\s*[-|·:·]\s*.*$", "", title)
-                    return title
-    except Exception:
-        return ""
-
 async def get_google_titles(query: str, limit=5) -> list:
-    """Get book titles with fuzzy matching for misspellings"""
-    search_query = f"{query} book"
-    results = list(search(search_query, num_results=15, lang="en"))
+    """Get book titles directly from Google search results page"""
+    search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}+book"
     
-    titles = []
-    seen = set()
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Set user-agent to mimic real browser
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            
+            async with session.get(search_url, headers=headers) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                titles = []
+                seen = set()
+                
+                # Parse Google's result divs
+                for result in soup.find_all('div', class_='tF2Cxc'):
+                    # Extract title from h3 tag
+                    title_tag = result.find('h3')
+                    if not title_tag:
+                        continue
+                    
+                    # Clean title text
+                    raw_title = title_tag.text.strip()
+                    clean_title = re.sub(r"[^\w\s]", " ", raw_title)
+                    clean_title = re.sub(r"\s+", " ", clean_title).strip()
+                    
+                    # Skip non-book titles
+                    if not any(word in clean_title.lower() for word in ['book', 'by ', 'author']):
+                        continue
+                    
+                    # Fuzzy match with original query
+                    score = fuzz.partial_ratio(query.lower(), clean_title.lower())
+                    if score < 50:  # Lower threshold for partial matches
+                        continue
+                    
+                    # Deduplicate
+                    if clean_title.lower() not in seen:
+                        seen.add(clean_title.lower())
+                        titles.append({
+                            "title": clean_title,
+                            "score": score
+                        })
+                
+                # Sort and return best matches
+                sorted_titles = sorted(titles, key=lambda x: x["score"], reverse=True)
+                return [t["title"] for t in sorted_titles[:limit]]
     
-    for url in results:
-        if not is_book_url(url):
-            continue
-            
-        # Get actual page title instead of URL parsing
-        title = await fetch_page_title(url)
-        if not title:
-            continue
-            
-        # Clean title
-        clean_title = re.sub(r"[^a-zA-Z0-9\s]", " ", title).strip()
-        clean_title = re.sub(r"\s+", " ", clean_title)
-        
-        # Skip if title doesn't look book-like
-        if len(clean_title.split()) < 2 or len(clean_title) < 5:
-            continue
-            
-        # Fuzzy match with original query
-        score = fuzz.token_set_ratio(query.lower(), clean_title.lower())
-        if score < 65:  # Adjust threshold as needed
-            continue
-            
-        # Deduplicate
-        key = clean_title.lower()
-        if key not in seen:
-            seen.add(key)
-            titles.append({
-                "title": clean_title.title(),
-                "score": score,
-                "url": url
-            })
-            
-        if len(titles) >= limit * 2: # Collect extra for sorting
-            break
-            
-    # Sort by fuzzy match score and return best matches
-    sorted_titles = sorted(titles, key=lambda x: x["score"], reverse=True)
-    return [t["title"] for t in sorted_titles[:limit]]
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
