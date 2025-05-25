@@ -492,9 +492,8 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
         except MessageNotModified:
             pass
     await query.answer()  
-
+    
 # Episode
-
 @Client.on_callback_query(filters.regex(r"^episodes#"))
 async def episodes_cb_handler(client: Client, query: CallbackQuery):
 
@@ -659,8 +658,6 @@ async def filter_episodes_cb_handler(client: Client, query: CallbackQuery):
             pass
     await query.answer()
     
-
-
 #languages
 @Client.on_callback_query(filters.regex(r"^languages#"))
 async def languages_cb_handler(client: Client, query: CallbackQuery):
@@ -825,9 +822,7 @@ async def filter_languages_cb_handler(client: Client, query: CallbackQuery):
         except MessageNotModified:
             pass
     await query.answer()
-    
-    
-    
+      
 @Client.on_callback_query(filters.regex(r"^seasons#"))
 async def seasons_cb_handler(client: Client, query: CallbackQuery):
 

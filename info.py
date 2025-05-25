@@ -102,7 +102,7 @@ SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'Self_Improvement_AudioBook_Bot') # S
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/Self_Improvement_AudioBook_Bot')
 
 # True Or False
-AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', True))
+AI_SPELL_CHECK = bool(environ.get('AI_SPELL_CHECK', False))
 SPELL_CHECK_REPLY = bool(environ.get("SPELL_CHECK_REPLY", True))
 PM_SEARCH = bool(environ.get('PM_SEARCH', True))
 BUTTON_MODE = bool(environ.get('BUTTON_MODE', True))
