@@ -3003,9 +3003,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 logger.error(f"Edit error: {e}")
             results = await libgen_search(Zahid)
             
-            # In the LibGen results block, modify this section:
             if results:
-                # Show LibGen results in NEW message
                 try:
                     search_key = str(uuid4())
                     search_cache[search_key] = {
@@ -3015,18 +3013,49 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                     }
                     buttons = await create_search_buttons(results, search_key, 1)
                     
-                    # Add validation for buttons
-                    if not buttons or not isinstance(buttons, list):
-                        buttons = [[InlineKeyboardButton("⚠️ Error Showing Results", callback_data="none")]]
+                    # Enhanced button validation
+                    valid_buttons = []
+                    if isinstance(buttons, list):
+                        for btn_row in buttons:
+                            if isinstance(btn_row, list):
+                                valid_row = []
+                                for btn in btn_row:
+                                    if isinstance(btn, InlineKeyboardButton):
+                                        valid_row.append(btn)
+                                if valid_row:
+                                    valid_buttons.append(valid_row)
+                    
+                    if not valid_buttons:
+                        # Create fallback buttons with result count
+                        valid_buttons = [[
+                            InlineKeyboardButton(
+                                f"📚 {len(results)} Results Found - Click Here",
+                                callback_data=f"libgen_{search_key}_1"
+                            )
+                        ]]
                         
                     libgen_msg = await msg.reply_text(
-                        f"📚 Found {len(results)} LibGen results:",
-                        reply_markup=InlineKeyboardMarkup(buttons)
+                        f"📚 Found {len(results)} LibGen results for '{Zahid}':",
+                        reply_markup=InlineKeyboardMarkup(valid_buttons)
                     )
+                    libgen_found = True
+                    
                 except Exception as e:
-                    logger.error(f"LibGen button error: {e}")
-                    libgen_msg = await msg.reply_text("⚠️ Error displaying LibGen results")
-                libgen_found = True
+                    logger.error(f"LibGen display error: {str(e)[:100]}")  # Log first 100 chars
+                    # Fallback to simple message
+                    libgen_msg = await msg.reply_text(
+                        f"✅ Found {len(results)} LibGen results\n"
+                        f"🔗 Use /libgen {Zahid} to view them"
+                    )
+                finally:
+                    # Maintain original auto-delete logic
+                    try:
+                        if settings.get('auto_delete'):
+                            await asyncio.sleep(600)
+                            await libgen_msg.delete()
+                    except Exception as e:
+                        logger.error(f"Delete error: {str(e)[:50]}")
+                    
                 break
 
     # Only show Z-Library if no LibGen results
