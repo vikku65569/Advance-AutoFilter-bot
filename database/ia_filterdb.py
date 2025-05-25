@@ -195,3 +195,46 @@ async def fetch_google_titles(query: str, limit=5) -> list[str]:
                     titles.append(clean_title)
 
     return titles
+
+
+BOOK_DOMAINS = [
+    "goodreads.com", "openlibrary.org", "books.google.com",
+    "bookbub.com", "bookdepository.com", "amazon.com", "kobo.com"
+]
+
+def is_book_url(url: str) -> bool:
+    """Check if the URL belongs to a known book-related domain or path."""
+    for domain in BOOK_DOMAINS:
+        if domain in url:
+            return True
+    # Extra check: path contains "book", "novel", "read", etc.
+    if re.search(r"/(book|novel|read|title)/", url, re.IGNORECASE):
+        return True
+    return False
+
+async def get_google_titles(query: str, limit=5) -> list:
+    results = list(search(query + " book", num_results=limit * 2))  # grab more, filter later
+    titles = []
+    
+    for url in results:
+        if not is_book_url(url):
+            continue
+
+        parts = url.rstrip('/').split("/")
+        last_part = parts[-1] if parts else ""
+        
+        # Clean up URL slug into readable title
+        raw_title = last_part.replace(".html", "")
+        title = re.sub(r"[-+._%20&$#@!]", " ", raw_title)
+        title = re.sub(r"\s+", " ", title).strip()
+
+        # Skip junk titles (like product IDs or numbers)
+        if len(title.split()) < 2 or title.isdigit():
+            continue
+        
+        titles.append(title.title())
+
+        if len(titles) >= limit:
+            break
+    
+    return titles

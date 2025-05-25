@@ -10,7 +10,7 @@ from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerId
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink, get_tutorial, send_all, get_cap
 from database.users_chats_db import db
-from database.ia_filterdb import col, sec_col, db as vjdb, sec_db, get_file_details, get_search_results, get_bad_files, get_google_titles
+from database.ia_filterdb import col, sec_col, db as vjdb, sec_db, get_file_details, get_search_results, get_bad_files, get_google_titles ,fetch_google_titles
 from database.filters_mdb import del_all, find_filter, get_filters
 from database.connections_mdb import mydb, active_connection, all_connections, delete_connection, if_active, make_active, make_inactive,connected_group
 from database.gfilters_mdb import find_gfilter, get_gfilters, del_allg
@@ -2936,11 +2936,13 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     if not movies:
     # Use Google to find suggested book titles
         try:
-            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling.</i></b>")
-            google_titles = await get_google_titles(mv_rqst)
+            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google api.</i></b>")
+            google_titles = await fetch_google_titles(mv_rqst)
+
         except Exception as e:
+            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google Search.</i></b>")
+            google_titles = await get_google_titles(mv_rqst)
             logger.error("Google fallback failed", exc_info=True)
-            google_titles = []
 
         if google_titles:
             SPELL_CHECK[mv_id] = google_titles
