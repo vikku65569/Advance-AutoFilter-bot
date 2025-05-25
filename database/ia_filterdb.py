@@ -9,8 +9,8 @@ from info import FILE_DB_URI, SEC_FILE_DB_URI, DATABASE_NAME, COLLECTION_NAME, M
 from googlesearch import search
 import aiohttp
 from bs4 import BeautifulSoup
-from fuzzywuzzy import fuzz
-from urllib.parse import urlparse,unquote
+from fuzzywuzzy import *
+from urllib.parse import *
 
 
 # First Database For File Saving 
