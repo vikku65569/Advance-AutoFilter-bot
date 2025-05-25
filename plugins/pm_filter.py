@@ -2937,29 +2937,29 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         google_titles_api = []
         google_titles_fallback = []
 
-        # try:
-        #     vj_ai_msg = await reply_msg.edit_text(
-        #         "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google search...</i></b>"
-        #     )
-        #     await asyncio.sleep(2)
-
-        #     # google_titles_api = await get_google_titles(mv_rqst)
-        # except Exception as e:
-        #     logger.warning("Google Books API failed", exc_info=True)
-
         try:
-            if not google_titles_api:
-                vj_ai_msg = await reply_msg.edit_text(
-                    "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google books api...</i></b>"
-                )
-                await asyncio.sleep(2)
+            vj_ai_msg = await reply_msg.edit_text(
+                "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google search...</i></b>"
+            )
+            await asyncio.sleep(2)
 
-            google_titles_fallback = await fetch_google_titles(mv_rqst)
+            google_titles_api = await get_google_titles(mv_rqst)
         except Exception as e:
-            logger.error("Google fallback failed", exc_info=True)
+            logger.warning("Google Books API failed", exc_info=True)
+
+        # try:
+        #     if not google_titles_api:
+        #         vj_ai_msg = await reply_msg.edit_text(
+        #             "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google books api...</i></b>"
+        #         )
+        #         await asyncio.sleep(2)
+
+        #     google_titles_fallback = await fetch_google_titles(mv_rqst)
+        # except Exception as e:
+        #     logger.error("Google fallback failed", exc_info=True)
 
         # Combine and deduplicate results
-        google_titles = google_titles_fallback
+        google_titles = google_titles_api
         # google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
 
         if google_titles:
@@ -2977,14 +2977,14 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
             try:
                 if settings.get('auto_delete'):
-                    await asyncio.sleep(600)
+                    await asyncio.sleep(1000)
                     await spell_check_del.delete()
             except KeyError:
                 grpid = await active_connection(str(msg.from_user.id))
                 await save_group_settings(grpid, 'auto_delete', True)
                 settings = await get_settings(msg.chat.id)
                 if settings.get('auto_delete'):
-                    await asyncio.sleep(600)
+                    await asyncio.sleep(1000)
                     await spell_check_del.delete()
                 return
         
@@ -3074,14 +3074,14 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         )
         try:
             if settings['auto_delete']:
-                await asyncio.sleep(600)
+                await asyncio.sleep(1000)
                 await spell_check_del.delete()
         except KeyError:
             grpid = await active_connection(str(msg.from_user.id))
             await save_group_settings(grpid, 'auto_delete', True)
             settings = await get_settings(msg.chat.id)
             if settings['auto_delete']:
-                await asyncio.sleep(600)
+                await asyncio.sleep(1000)
                 await spell_check_del.delete()
 
 async def manual_filters(client, message, text=False):
