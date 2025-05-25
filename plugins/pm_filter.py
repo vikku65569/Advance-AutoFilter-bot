@@ -3016,13 +3016,11 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                         f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
                     ]
 
-                    k = await reply_msg.edit(
+                    await reply_msg.edit(
                         "\n".join(response),
                         reply_markup=buttons,
                         parse_mode=enums.ParseMode.HTML
                     )
-                    await asyncio.sleep(1000)
-                    await k.delete()
                     # return  # Stop further processing once LibGen result is shown
 
                 if not results:
@@ -3031,7 +3029,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                         InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
                     ]]
 
-                    if NO_RESULTS_MSG:
+                    if NO_RESULTS_MSG :
                         await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
                     k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
                     await asyncio.sleep(60)
