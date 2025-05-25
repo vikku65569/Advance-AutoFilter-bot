@@ -257,18 +257,7 @@ async def advantage_spoll_choker(bot, query):
 
     _, user, movie_ = query.data.split('#')
 
-    # movies = SPELL_CHECK.get(query.message.reply_to_message.id)
-
-    try:
-        cache_key = query.message.reply_to_message.id
-    except AttributeError:
-        await query.answer("Original message not found!", show_alert=True)
-        return
-
-    movies = SPELL_CHECK.get(cache_key)  # Use consistent key
-    if not movies:
-        await query.answer("Suggestions expired", show_alert=True)
-        return
+    movies = SPELL_CHECK.get(query.message.reply_to_message.id)
   
     if int(user) != 0 and query.from_user.id != int(user):
         return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
@@ -285,7 +274,7 @@ async def advantage_spoll_choker(bot, query):
 
         k = await manual_filters(bot, query.message, text=movie)
         if k == False:
-            print(f"Searching for {movie} in database...")
+           
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
 
             print(f"Searching for {files} {movie} in database 2nd ...")
@@ -2973,7 +2962,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
             SPELL_CHECK[mv_id] = google_titles
             btn = [
-                [InlineKeyboardButton(title.strip(), callback_data=f"spol#{reqstr1}#{i}")]
+                [InlineKeyboardButton(text=title.strip(), callback_data=f"spol#{reqstr1}#{i}")]
                 for i, title in enumerate(google_titles)
             ]
             btn.append([InlineKeyboardButton(text="❌ Close Google Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
