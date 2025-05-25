@@ -302,8 +302,8 @@ async def advantage_spoll_choker(bot, query):
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
-                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
-                await auto_filter(bot, movie, query, reply_msg, ai_search,k)
+                reply_msg_before = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
+                await auto_filter(bot, movie, query, reply_msg_before, ai_search,k)
 
                
 
@@ -2665,7 +2665,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.edit_reply_markup(reply_markup)
     await query.answer(MSG_ALRT)
 
-async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
+async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=True):
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     if not spoll:
         message = msg
