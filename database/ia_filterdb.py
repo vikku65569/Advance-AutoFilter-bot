@@ -6,6 +6,7 @@ from pyrogram.file_id import FileId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 from info import FILE_DB_URI, SEC_FILE_DB_URI, DATABASE_NAME, COLLECTION_NAME, MULTIPLE_DATABASE, USE_CAPTION_FILTER, MAX_B_TN
+from googlesearch import search
 
 # First Database For File Saving 
 client = MongoClient(FILE_DB_URI)
@@ -171,4 +172,13 @@ def unpack_new_file_id(new_file_id):
         )
     )
     return file_id
-    
+
+async def get_google_titles(query: str, limit=5) -> list:
+    results = list(search(query + " book", num_results=limit))
+    titles = []
+    for url in results:
+        # Extract the title from URL or just strip the domain
+        parts = url.split("/")
+        title = parts[-1].replace("-", " ").replace("+", " ").title()
+        titles.append(title)
+    return titles
