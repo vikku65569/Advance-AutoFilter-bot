@@ -124,7 +124,7 @@ async def upload_to_telegram(client, temp_path: str, book: dict, progress_msg, c
     return await client.send_document(
         chat_id=chat_id,
         document=temp_path,
-        caption=f"📚 {book.get('Title', 'Unknown')}\n👤 Author: {book.get('Author', 'Unknown')}\n📦 Size: {book.get('Size', 'N/A')}",
+        caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}",
         progress=progress
     )
 
