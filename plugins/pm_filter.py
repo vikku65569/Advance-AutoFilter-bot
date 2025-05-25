@@ -2921,7 +2921,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ it : poster didnt have any results ", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
 
         if NO_RESULTS_MSG:
@@ -2937,15 +2937,15 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         google_titles_api = []
         google_titles_fallback = []
 
-        try:
-            vj_ai_msg = await reply_msg.edit_text(
-                "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google search...</i></b>"
-            )
-            await asyncio.sleep(2)
+        # try:
+        #     vj_ai_msg = await reply_msg.edit_text(
+        #         "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google search...</i></b>"
+        #     )
+        #     await asyncio.sleep(2)
 
-            google_titles_api = await get_google_titles(mv_rqst)
-        except Exception as e:
-            logger.warning("Google Books API failed", exc_info=True)
+        #     # google_titles_api = await get_google_titles(mv_rqst)
+        # except Exception as e:
+        #     logger.warning("Google Books API failed", exc_info=True)
 
         try:
             if not google_titles_api:
@@ -2954,12 +2954,12 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 )
                 await asyncio.sleep(2)
 
-            # google_titles_fallback = await fetch_google_titles(mv_rqst)
+            google_titles_fallback = await fetch_google_titles(mv_rqst)
         except Exception as e:
             logger.error("Google fallback failed", exc_info=True)
 
         # Combine and deduplicate results
-        google_titles = google_titles_api
+        google_titles = google_titles_fallback
         # google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
 
         if google_titles:
@@ -2992,7 +2992,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             # No Google results either, fallback to plain Google button
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[
-                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ Search", url=f"https://www.google.com/search?q={reqst_gle}")
+                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ the Spelling ", url=f"https://www.google.com/search?q={reqst_gle}")
             ]]
 
             if NO_RESULTS_MSG:
@@ -3067,7 +3067,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             ]
             for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton(text="Close Google Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+        btn.append([InlineKeyboardButton(text="Close Z-library Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
         spell_check_del = await reply_msg.edit_text(
             text=script.CUDNT_FND.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(btn)
