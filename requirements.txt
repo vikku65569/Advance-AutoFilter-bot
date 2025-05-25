@@ -41,4 +41,4 @@ ffmpeg-python>=0.2.0
 openai==0.25.0
 libgen-api-enhanced
 git+https://github.com/Joelkb/cinemagoer
-googlesearch 
+googlesearch-python
