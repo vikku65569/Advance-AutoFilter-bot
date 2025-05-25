@@ -254,8 +254,21 @@ async def next_page(bot, query):
 
 @Client.on_callback_query(filters.regex(r"^spol"))
 async def advantage_spoll_choker(bot, query):
+
     _, user, movie_ = query.data.split('#')
-    movies = SPELL_CHECK.get(query.message.reply_to_message.id)
+
+    # movies = SPELL_CHECK.get(query.message.reply_to_message.id)
+
+    try:
+        cache_key = query.message.reply_to_message.id
+    except AttributeError:
+        await query.answer("Original message not found!", show_alert=True)
+        return
+
+    movies = SPELL_CHECK.get(cache_key)  # Use consistent key
+    if not movies:
+        await query.answer("Suggestions expired", show_alert=True)
+        return
   
     if int(user) != 0 and query.from_user.id != int(user):
         return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
@@ -282,6 +295,7 @@ async def advantage_spoll_choker(bot, query):
                 ai_search = True
                 reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg, ai_search, k)
+
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
                 reqstr = await bot.get_users(reqstr1)
@@ -348,6 +362,7 @@ async def advantage_spoll_choker(bot, query):
             #         k = await query.message.edit(script.MVE_NT_FND)
             #         await asyncio.sleep(60)
             #         await k.delete()
+
 
 # Year 
 @Client.on_callback_query(filters.regex(r"^years#"))
@@ -2965,7 +2980,9 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
             spell_check_del = await reply_msg.edit_text(
                 text=script.CUDNT_FND.format(mv_rqst),
-                reply_markup=InlineKeyboardMarkup(btn)
+                chat_id=msg.chat.id,
+                reply_markup=InlineKeyboardMarkup(btn),
+                reply_to_message_id=msg.id
             )
 
             try:
