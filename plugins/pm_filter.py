@@ -2987,19 +2987,15 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
 
+
     if AI_SPELL_CHECK == True and vj_search == True:
         movienamelist = []
         movienamelist += [movie.get('title') for movie in movies]
-        libgen_results_found = False
 
         for Zahid in movienamelist:
-            if mv_rqst.lower().startswith(Zahid.lower()):
-                try:
-                    await reply_msg.edit_text(f"🔍 Doing deep search for '{Zahid}'...")
-                except MessageNotModified:
-                    pass
-                except Exception as e:
-                    logger.error(f"Search status error: {e}")
+            
+            if mv_rqst.startswith(Zahid):
+                await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
 
                 results = await libgen_search(Zahid)
 
@@ -3020,52 +3016,26 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                         f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
                     ]
 
-                    try:
-                        await reply_msg.edit(
-                            "\n".join(response),
-                            reply_markup=InlineKeyboardMarkup(buttons),
-                            parse_mode=enums.ParseMode.HTML
-                        )
-                    except MessageNotModified:
-                        pass
-                    
-                    libgen_results_found = True
-                    return  # Maintain original return to prevent Z-Library suggestions
-
-        # Only show Z-Library suggestions if no LibGen results found
-        if not libgen_results_found:
-            btn = [
-                [
-                    InlineKeyboardButton(
-                        text=movie_name.strip(),
-                        callback_data=f"spol#{reqstr1}#{k}",
+                    await reply_msg.edit(
+                        "\n".join(response),
+                        reply_markup=buttons,
+                        parse_mode=enums.ParseMode.HTML
                     )
-                ]
-                for k, movie_name in enumerate(movielist)
-            ]
-            btn.append([InlineKeyboardButton(text=" ❌ Close Z-library Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
-            
-            try:
-                spell_check_del = await reply_msg.edit_text(
-                    text=script.CUDNT_FND.format(mv_rqst),
-                    reply_markup=InlineKeyboardMarkup(btn)
-                )
-                if settings.get('auto_delete'):
-                    await asyncio.sleep(1000)
-                    await spell_check_del.delete()
-            except Exception as e:
-                logger.error(f"Z-Lib suggestions error: {str(e)[:100]}")
-                # Fallback to original Google button
-                reqst_gle = mv_rqst.replace(" ", "+")
-                button = [[InlineKeyboardButton("🔍 Google Search", url=f"https://www.google.com/search?q={reqst_gle}")]]
-                fallback_msg = await reply_msg.edit_text(
-                    text=script.I_CUDNT.format(mv_rqst),
-                    reply_markup=InlineKeyboardMarkup(button)
-                )
-                await asyncio.sleep(60)
-                await fallback_msg.delete()
+                    return  # Stop further processing once LibGen result is shown
 
+            
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
+        ]]
+
+        if NO_RESULTS_MSG :
+            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+        k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
+        await asyncio.sleep(60)
+        await k.delete()
         return
+    
     else:
         btn = [
             [
