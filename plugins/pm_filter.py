@@ -3016,11 +3016,13 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                         f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
                     ]
 
-                    await reply_msg.edit(
+                    k = await reply_msg.edit(
                         "\n".join(response),
                         reply_markup=buttons,
                         parse_mode=enums.ParseMode.HTML
                     )
+                    await asyncio.sleep(1000)
+                    await k.delete()
                     # return  # Stop further processing once LibGen result is shown
 
                 if not results:
