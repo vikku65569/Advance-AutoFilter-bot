@@ -2937,11 +2937,11 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     # Use Google to find suggested book titles
         try:
             vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google api.</i></b>")
-            google_titles = await fetch_google_titles(mv_rqst)
+            google_titles = await get_google_titles(mv_rqst)
 
         except Exception as e:
+            google_titles = await fetch_google_titles(mv_rqst)
             vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling in Google Search.</i></b>")
-            google_titles = await get_google_titles(mv_rqst)
             logger.error("Google fallback failed", exc_info=True)
 
         if google_titles:
