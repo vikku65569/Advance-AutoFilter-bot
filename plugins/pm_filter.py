@@ -6,7 +6,7 @@ from Script import script
 from info import *
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, InputMediaPhoto, ChatPermissions, WebAppInfo
 from pyrogram import Client, filters, enums
-from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid, MessageIdInvalid
+from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid
 from pyrogram.errors.exceptions.bad_request_400 import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
 from utils import get_size, is_subscribed, pub_is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink, get_tutorial, send_all, get_cap
 from database.users_chats_db import db
@@ -258,8 +258,6 @@ async def advantage_spoll_choker(bot, query):
     _, user, movie_ = query.data.split('#')
 
     movies = SPELL_CHECK.get(query.message.reply_to_message.id)
-
-
   
     if int(user) != 0 and query.from_user.id != int(user):
         return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
@@ -281,24 +279,11 @@ async def advantage_spoll_choker(bot, query):
 
             print(f"Searching for {files} {movie} in database 2nd ...")
 
-            # if files:
-            #     k = (movie, files, offset, total_results)
-            #     ai_search = True
-            #     reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
-            #     await auto_filter(bot, movie, query, reply_msg, ai_search, k)
-
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
-                try:
-                    # Try editing existing message first
-                    reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
-                except MessageIdInvalid:
-                    # Fallback: Create new message if original was deleted
-                    reply_msg = await query.message.reply(f"<b><i>Searching For {movie} 🔍</i></b>")
-                finally:
-                    await auto_filter(bot, movie, query, reply_msg, ai_search, k)
-                    await query.message.delete()  # Delete suggestion message immediately    
+                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
+                await auto_filter(bot, movie, query, reply_msg, ai_search, k)
 
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
@@ -2982,11 +2967,9 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             ]
             btn.append([InlineKeyboardButton(text="❌ Close Google Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
 
-# Change to:
-            spell_check_del = await msg.reply(
+            spell_check_del = await reply_msg.edit_text(
                 text=script.CUDNT_FND.format(mv_rqst),
-                reply_markup=InlineKeyboardMarkup(btn),
-                reply_to_message_id=msg.id  # Force reply chain
+                reply_markup=InlineKeyboardMarkup(btn)
             )
 
             try:
