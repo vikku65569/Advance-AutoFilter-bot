@@ -2995,7 +2995,12 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     # Check all possible matches
     for Zahid in movienamelist:
         if mv_rqst.lower().startswith(Zahid.lower()):
-            await reply_msg.edit_text(f"🔍 Doing deep search for '{Zahid}'...")
+            try:
+                await reply_msg.edit_text(f"🔍 Doing deep search for '{Zahid}'...")
+            except MessageNotModified:
+                pass  # Ignore if message content is same
+            except Exception as e:
+                logger.error(f"Edit error: {e}")
             results = await libgen_search(Zahid)
             
             # In the LibGen results block, modify this section:
