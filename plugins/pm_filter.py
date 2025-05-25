@@ -2922,6 +2922,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     if not movies:
     # Use Google to find suggested book titles
         try:
+            vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling.</i></b>")
             google_titles = await get_google_titles(mv_rqst)
         except Exception as e:
             logger.error("Google fallback failed", exc_info=True)
@@ -2933,10 +2934,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 [InlineKeyboardButton(title.strip(), callback_data=f"spol#{reqstr1}#{i}")]
                 for i, title in enumerate(google_titles)
             ]
-            btn.append([InlineKeyboardButton(text="Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+            btn.append([InlineKeyboardButton(text="Close Google Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
 
             spell_check_del = await reply_msg.edit_text(
-                text=script.CUDNT_FND.format(mv_rqst + " (suggested from Google)"),
+                text=script.CUDNT_FND.format(mv_rqst),
                 reply_markup=InlineKeyboardMarkup(btn)
             )
             try:
@@ -2974,8 +2975,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
 
     if AI_SPELL_CHECK == True and vj_search == True:
-        vj_search_new = False
-        vj_ai_msg = await reply_msg.edit_text("<b><i>I Am Trying To Find Your File With Your Wrong Spelling.</i></b>")
         movienamelist = []
         movienamelist += [movie.get('title') for movie in movies]
 
@@ -3033,7 +3032,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             ]
             for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton(text="Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+        btn.append([InlineKeyboardButton(text="Close Z-lib Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
         spell_check_del = await reply_msg.edit_text(
             text=script.CUDNT_FND.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(btn)
