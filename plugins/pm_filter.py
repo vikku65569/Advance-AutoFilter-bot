@@ -2998,25 +2998,31 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             await reply_msg.edit_text(f"🔍 Doing deep search for '{Zahid}'...")
             results = await libgen_search(Zahid)
             
+            # In the LibGen results block, modify this section:
             if results:
                 # Show LibGen results in NEW message
-                libgen_msg = await msg.reply_text(
-                    f"📚 Found {len(results)} LibGen results:",
-                    reply_markup=InlineKeyboardMarkup(
-                        await create_search_buttons(results, str(uuid4()), 1)
-                    )
-                )
-                libgen_found = True
-                
-                # Set auto-delete for LibGen message
                 try:
-                    if settings.get('auto_delete'):
-                        await asyncio.sleep(600)  # 10 minutes
-                        await libgen_msg.delete()
+                    search_key = str(uuid4())
+                    search_cache[search_key] = {
+                        'results': results,
+                        'query': Zahid,
+                        'time': datetime.now()
+                    }
+                    buttons = await create_search_buttons(results, search_key, 1)
+                    
+                    # Add validation for buttons
+                    if not buttons or not isinstance(buttons, list):
+                        buttons = [[InlineKeyboardButton("⚠️ Error Showing Results", callback_data="none")]]
+                        
+                    libgen_msg = await msg.reply_text(
+                        f"📚 Found {len(results)} LibGen results:",
+                        reply_markup=InlineKeyboardMarkup(buttons)
+                    )
                 except Exception as e:
-                    logger.error(f"LibGen msg delete error: {e}")
-                
-                break  # Stop after first successful LibGen match
+                    logger.error(f"LibGen button error: {e}")
+                    libgen_msg = await msg.reply_text("⚠️ Error displaying LibGen results")
+                libgen_found = True
+                break
 
     # Only show Z-Library if no LibGen results
     if not libgen_found:
