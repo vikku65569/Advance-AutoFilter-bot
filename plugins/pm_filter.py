@@ -2980,8 +2980,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
             spell_check_del = await reply_msg.edit_text(
                 text=script.CUDNT_FND.format(mv_rqst),
-                reply_markup=InlineKeyboardMarkup(btn),
-                reply_to_message_id=msg.id
+                reply_markup=InlineKeyboardMarkup(btn)
             )
 
             try:
