@@ -2992,7 +2992,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             # No Google results either, fallback to plain Google button
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[
-                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ the Spelling ", url=f"https://www.google.com/search?q={reqst_gle}")
+                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ the Spelling yourself", url=f"https://www.google.com/search?q={reqst_gle}")
             ]]
 
             if NO_RESULTS_MSG:
