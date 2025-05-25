@@ -2987,88 +2987,54 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
 
+
     if AI_SPELL_CHECK == True and vj_search == True:
-        libgen_found = False
-        movienamelist = [movie.get('title') for movie in movies]
+        movienamelist = []
+        movienamelist += [movie.get('title') for movie in movies]
 
-        # Check all Z-Library titles for LibGen matches
         for Zahid in movienamelist:
-            try:
-                # Case-insensitive match check
-                if mv_rqst.lower().startswith(Zahid.lower()):
-                    try:
-                        # Update search status
-                        await reply_msg.edit_text(f"🔍 Deep search: {Zahid}...")
-                    except MessageNotModified:
-                        pass
-                    
-                    # LibGen search
-                    results = await libgen_search(Zahid)
-                    
-                    if results:
-                        # Show LibGen results
-                        search_key = str(uuid4())
-                        search_cache[search_key] = {
-                            'results': results,
-                            'query': Zahid,
-                            'time': datetime.now()
-                        }
-                        buttons = await create_search_buttons(results, search_key, 1)
+            
+            if mv_rqst.startswith(Zahid):
+                await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
 
-                        # Validate buttons format
-                        if not buttons or not isinstance(buttons, list):
-                            buttons = [[InlineKeyboardButton("📚 View Results", callback_data=f"libgen_{search_key}_1")]]
+                results = await libgen_search(Zahid)
 
-                        try:
-                            await reply_msg.edit(
-                                text=f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>",
-                                reply_markup=InlineKeyboardMarkup(buttons),
-                                parse_mode=enums.ParseMode.HTML
-                            )
-                        except MessageNotModified:
-                            pass
-                        
-                        libgen_found = True
-                        break  # Stop after first successful LibGen match
+                if results:
+                    search_key = str(uuid4())
+                    search_cache[search_key] = {
+                        'results': results,
+                        'query': Zahid,
+                        'time': datetime.now()
+                    }
 
-            except Exception as e:
-                logger.error(f"LibGen search error: {str(e)[:100]}")
-                continue
+                    buttons = await create_search_buttons(results, search_key, 1)
 
-        # Only show Z-Library suggestions if no LibGen results
-        if not libgen_found:
-            try:
-                # Create Z-Library suggestion buttons
-                btn = [
-                    [InlineKeyboardButton(
-                        text=movie_name.strip(),
-                        callback_data=f"spol#{reqstr1}#{k}",
-                    )] for k, movie_name in enumerate(movielist)
-                ]
-                btn.append([InlineKeyboardButton("❌ Close", callback_data=f'spol#{reqstr1}#close')])
-                
-                # Edit original message with Z-Library suggestions
-                await reply_msg.edit_text(
-                    text=script.CUDNT_FND.format(mv_rqst),
-                    reply_markup=InlineKeyboardMarkup(btn)
-                )
-                
-                # Maintain existing auto-delete logic
-                if settings.get('auto_delete'):
-                    await asyncio.sleep(1000)
-                    await reply_msg.delete()
-                    
-            except Exception as e:
-                logger.error(f"Z-Lib suggestion error: {str(e)[:100]}")
-                # Fallback to original behavior
-                reqst_gle = mv_rqst.replace(" ", "+")
-                button = [[InlineKeyboardButton("🔍 Google", url=f"https://google.com/search?q={reqst_gle}")]]
-                await reply_msg.edit_text(
-                    text=script.I_CUDNT.format(mv_rqst),
-                    reply_markup=InlineKeyboardMarkup(button)
-                )
+                    response = [
+                        f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
+                        f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
+                        f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                        f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+                    ]
 
-        return  # Exit after handling LibGen/Z-Library
+                    await reply_msg.edit(
+                        "\n".join(response),
+                        reply_markup=buttons,
+                        parse_mode=enums.ParseMode.HTML
+                    )
+                    return  # Stop further processing once LibGen result is shown
+
+            
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
+        ]]
+
+        if NO_RESULTS_MSG :
+            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+        k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
+        await asyncio.sleep(60)
+        await k.delete()
+        return
     
     else:
         btn = [
