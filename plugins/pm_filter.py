@@ -2959,7 +2959,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             logger.error("Google fallback failed", exc_info=True)
 
         # Combine and deduplicate results
-        google_titles = list(dict.fromkeys(google_titles_api))
+        google_titles = google_titles_api
         # google_titles = list(dict.fromkeys(google_titles_api + google_titles_fallback))
 
         if google_titles:
