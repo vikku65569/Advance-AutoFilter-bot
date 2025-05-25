@@ -42,5 +42,3 @@ openai==0.25.0
 libgen-api-enhanced
 git+https://github.com/Joelkb/cinemagoer
 googlesearch-python
-fuzzywuzzy
-python-Levenshtein
