@@ -273,62 +273,76 @@ async def advantage_spoll_choker(bot, query):
 
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
 
-            reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
-                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
+                reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg, ai_search, k)
-
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
                 reqstr = await bot.get_users(reqstr1)
+                if NO_RESULTS_MSG:
+                    await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
+                k = await query.message.edit(script.MVE_NT_FND)
+                await asyncio.sleep(10)
+                await k.delete()
 
-                try:
-                    await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'in Library...")
+            # reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
+            # if files:
+            #     k = (movie, files, offset, total_results)
+            #     ai_search = True
+            #     reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
+            #     await auto_filter(bot, movie, query, reply_msg, ai_search, k)
 
-                    results = await libgen_search(movie)
-                    if results:
-                        # Cache and paginate
-                        search_key = str(uuid4())
-                        search_cache[search_key] = {
-                            "results": results,
-                            "query": movie,
-                            "time": datetime.now()
-                        }
-                        buttons = await create_search_buttons(results, search_key, 1)
+            # else:
+            #     reqstr1 = query.from_user.id if query.from_user else 0
+            #     reqstr = await bot.get_users(reqstr1)
 
-                        response = [
-                            f"📚 Found {len(results)} LibGen results for <b>{movie}</b>:",
-                            f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {reply_msg.from_user.mention if reply_msg.from_user else 'Unknown User'}",
-                            "Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-                            f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
-                        ]
+            #     try:
+            #         await reply_msg.edit_text(f"🔍 Doing a deep search for '{movie}'in Library...")
 
-                        await reply_msg.edit(
-                            "\n".join(response),
-                            reply_markup=buttons,
-                            parse_mode=enums.ParseMode.HTML
-                        )
+            #         results = await libgen_search(movie)
+            #         if results:
+            #             # Cache and paginate
+            #             search_key = str(uuid4())
+            #             search_cache[search_key] = {
+            #                 "results": results,
+            #                 "query": movie,
+            #                 "time": datetime.now()
+            #             }
+            #             buttons = await create_search_buttons(results, search_key, 1)
 
-                        return
+            #             response = [
+            #                 f"📚 Found {len(results)} LibGen results for <b>{movie}</b>:",
+            #                 f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {reply_msg.from_user.mention if reply_msg.from_user else 'Unknown User'}",
+            #                 "Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+            #                 f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+            #             ]
 
-                    else:
-                        await reply_msg.edit_text(f"⚠️ No LibGen results for '{movie}'.")
+            #             await reply_msg.edit(
+            #                 "\n".join(response),
+            #                 reply_markup=buttons,
+            #                 parse_mode=enums.ParseMode.HTML
+            #             )
+
+            #             return
+
+            #         else:
+            #             await reply_msg.edit_text(f"⚠️ No LibGen results for '{movie}'.")
                         
-                except Exception as e:
-                    logger.error(f"LibGen fallback error: {e}")
-                    await reply_msg.edit_text(
-                        f"**⚠️ LibGen Search Failed.**\nError: `{e}`",
-                        parse_mode=enums.ParseMode.MARKDOWN
-                    )
+            #     except Exception as e:
+            #         logger.error(f"LibGen fallback error: {e}")
+            #         await reply_msg.edit_text(
+            #             f"**⚠️ LibGen Search Failed.**\nError: `{e}`",
+            #             parse_mode=enums.ParseMode.MARKDOWN
+            #         )
 
-                    if NO_RESULTS_MSG:
-                        await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
+            #         if NO_RESULTS_MSG:
+            #             await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
 
-                    k = await query.message.edit(script.MVE_NT_FND)
-                    await asyncio.sleep(60)
-                    await k.delete()
+            #         k = await query.message.edit(script.MVE_NT_FND)
+            #         await asyncio.sleep(60)
+            #         await k.delete()
 
 # Year 
 @Client.on_callback_query(filters.regex(r"^years#"))
@@ -3032,7 +3046,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             ]
             for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton(text="Close Z-lib Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+        btn.append([InlineKeyboardButton(text="Close Google Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
         spell_check_del = await reply_msg.edit_text(
             text=script.CUDNT_FND.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(btn)
