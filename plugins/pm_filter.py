@@ -271,8 +271,6 @@ async def advantage_spoll_choker(bot, query):
     await query.answer(script.TOP_ALRT_MSG)
     gl = await global_filters(bot, query.message, text=movie)
     
-
-
     if gl == False:
 
         k = await manual_filters(bot, query.message, text=movie)
@@ -280,32 +278,12 @@ async def advantage_spoll_choker(bot, query):
            
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
 
-            print(f"reached here for  {movie} {files}in database 2nd ...")
-
-            # if files:
-            #     k = (movie, files, offset, total_results)
-            #     ai_search = True
-            #     reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
-            #     await auto_filter(bot, movie, query, reply_msg, ai_search, k)
-
-            # else:
-            #     reqstr1 = query.from_user.id if query.from_user else 0
-            #     reqstr = await bot.get_users(reqstr1)
-            #     print(f"Searching for {movie} deleted the message...")
-            #     if NO_RESULTS_MSG:
-            #         await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
-            #     k = await query.message.edit(script.MVE_NT_FND)
-            #     await asyncio.sleep(100)
-            #     await k.delete()
-
             reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
                 reply_msg_before = await query.message.edit_text(f"<b><i>Searching For {movie} In database🔍</i></b>")
                 await auto_filter(bot, movie, query, reply_msg_before, ai_search,k)
-
-               
 
             else:
                 reqstr1 = query.from_user.id if query.from_user else 0
@@ -2747,7 +2725,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
         message = msg.message.reply_to_message  # msg will be callback query
         search, files, offset, total_results = spoll
         settings = await get_settings(message.chat.id)
-        # await msg.message.delete()
+        # await msg.message.delete() 
     pre = 'filep' if settings['file_secure'] else 'file'
     key = f"{message.chat.id}-{message.id}"
     req = message.from_user.id if message.from_user else 0

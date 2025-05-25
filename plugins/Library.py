@@ -31,10 +31,13 @@ def escape_markdown(text: str) -> str:
 async def libgen_search(query: str):
     """Reusable search function"""
     try:
-        return lg.search_title_filtered(query, filters={}, exact_match=True)
+        default_results = lg.search_default(query)
+        filtered_results = lg.search_title_filtered(query, filters={}, exact_match=True)
+        search_default_filtered = lg.search_default_filtered(query, filters={},exact_match=False)
+        return filtered_results + default_results + search_default_filtered # Combine both result lists
     except FloodWait as e:
         await asyncio.sleep(e.value + 2)
-        return lg.search_title_filtered(query, filters={}, exact_match=True)
+        return lg.search_title(query)
 
 async def create_search_buttons(results: list, search_key: str, page: int):
     """Create paginated inline keyboard markup"""
