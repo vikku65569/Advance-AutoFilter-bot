@@ -2939,8 +2939,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
         try:
             vj_ai_msg = await reply_msg.edit_text(
-                "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google Books API...</i></b>"
+                "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google search...</i></b>"
             )
+            await asyncio.sleep(2)
+
             google_titles_api = await get_google_titles(mv_rqst)
         except Exception as e:
             logger.warning("Google Books API failed", exc_info=True)
@@ -2948,8 +2950,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         try:
             if not google_titles_api:
                 vj_ai_msg = await reply_msg.edit_text(
-                    "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google Search...</i></b>"
+                    "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google books api...</i></b>"
                 )
+                await asyncio.sleep(2)
+
             google_titles_fallback = await fetch_google_titles(mv_rqst)
         except Exception as e:
             logger.error("Google fallback failed", exc_info=True)

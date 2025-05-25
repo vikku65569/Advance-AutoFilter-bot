@@ -176,7 +176,7 @@ def unpack_new_file_id(new_file_id):
     return file_id
 
 
-async def fetch_google_titles(query: str, limit=5) -> list[str]:
+async def fetch_google_titles(query: str, limit=10) -> list[str]:
     url = f"https://www.googleapis.com/books/v1/volumes?q={query}&maxResults={limit}"
     titles = []
 
