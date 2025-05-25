@@ -2988,80 +2988,61 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     SPELL_CHECK[mv_id] = movielist
 
 
-    if AI_SPELL_CHECK == True and vj_search == True:
-        movienamelist = []
-        movienamelist += [movie.get('title') for movie in movies]
-
-        for Zahid in movienamelist:
-            
-            if mv_rqst.startswith(Zahid):
-                await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
-
-                results = await libgen_search(Zahid)
-
-                if results:
-                    search_key = str(uuid4())
-                    search_cache[search_key] = {
-                        'results': results,
-                        'query': Zahid,
-                        'time': datetime.now()
-                    }
-
-                    buttons = await create_search_buttons(results, search_key, 1)
-
-                    response = [
-                        f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
-                        f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
-                        f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-                        f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
-                    ]
-
-                    await reply_msg.edit(
-                        "\n".join(response),
-                        reply_markup=buttons,
-                        parse_mode=enums.ParseMode.HTML
-                    )
-                    return  # Stop further processing once LibGen result is shown
-
-            
-        reqst_gle = mv_rqst.replace(" ", "+")
-        button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
-
-        if NO_RESULTS_MSG :
-            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
-        k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
-        await asyncio.sleep(60)
-        await k.delete()
-        return
+    if AI_SPELL_CHECK and vj_search:
+        libgen_found = False
+        movienamelist = [movie.get('title') for movie in movies]
     
-    else:
-        btn = [
-            [
-                InlineKeyboardButton(
-                    text=movie_name.strip(),
-                    callback_data=f"spol#{reqstr1}#{k}",
+    # Check all possible matches
+    for Zahid in movienamelist:
+        if mv_rqst.lower().startswith(Zahid.lower()):
+            await reply_msg.edit_text(f"🔍 Doing deep search for '{Zahid}'...")
+            results = await libgen_search(Zahid)
+            
+            if results:
+                # Show LibGen results in NEW message
+                libgen_msg = await msg.reply_text(
+                    f"📚 Found {len(results)} LibGen results:",
+                    reply_markup=InlineKeyboardMarkup(
+                        await create_search_buttons(results, str(uuid4()), 1)
+                    )
                 )
-            ]
-            for k, movie_name in enumerate(movielist)
+                libgen_found = True
+                
+                # Set auto-delete for LibGen message
+                try:
+                    if settings.get('auto_delete'):
+                        await asyncio.sleep(600)  # 10 minutes
+                        await libgen_msg.delete()
+                except Exception as e:
+                    logger.error(f"LibGen msg delete error: {e}")
+                
+                break  # Stop after first successful LibGen match
+
+    # Only show Z-Library if no LibGen results
+    if not libgen_found:
+        btn = [
+            [InlineKeyboardButton(
+                text=movie_name.strip(),
+                callback_data=f"spol#{reqstr1}#{k}",
+            )] for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton(text=" ❌ Close Z-library Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
-        spell_check_del = await reply_msg.edit_text(
+        btn.append([InlineKeyboardButton("❌ Close", callback_data=f'spol#{reqstr1}#close')])
+        
+        zlib_msg = await reply_msg.edit_text(
             text=script.CUDNT_FND.format(mv_rqst),
             reply_markup=InlineKeyboardMarkup(btn)
         )
+        
+        # Auto-delete Z-Library suggestions
         try:
-            if settings['auto_delete']:
-                await asyncio.sleep(1000)
-                await spell_check_del.delete()
-        except KeyError:
-            grpid = await active_connection(str(msg.from_user.id))
-            await save_group_settings(grpid, 'auto_delete', True)
-            settings = await get_settings(msg.chat.id)
-            if settings['auto_delete']:
-                await asyncio.sleep(1000)
-                await spell_check_del.delete()
+            if settings.get('auto_delete'):
+                await asyncio.sleep(300)  # 5 minutes
+                await zlib_msg.delete()
+        except Exception as e:
+            logger.error(f"Z-Lib msg delete error: {e}")
+        return
+    
+    
 
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)
