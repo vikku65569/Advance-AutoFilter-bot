@@ -276,6 +276,7 @@ async def advantage_spoll_choker(bot, query):
             files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
 
             print(f"Searching for {files} {movie} in database 2nd ...")
+
             if files:
                 k = (movie, files, offset, total_results)
                 ai_search = True
@@ -288,7 +289,7 @@ async def advantage_spoll_choker(bot, query):
                 if NO_RESULTS_MSG:
                     await bot.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, movie)))
                 k = await query.message.edit(script.MVE_NT_FND)
-                await asyncio.sleep(10)
+                await asyncio.sleep(100)
                 await k.delete()
 
             # reply_msg = await query.message.edit_text(f"<b><i>Searching For {movie} 🔍</i></b>")
