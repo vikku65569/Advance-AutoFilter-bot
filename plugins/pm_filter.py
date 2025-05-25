@@ -2913,7 +2913,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ it : poster didnt have any results ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ Fᴏʀ Mᴇᴛᴀ Dᴀᴛᴀ ", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
 
         if NO_RESULTS_MSG:
@@ -2933,7 +2933,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 vj_ai_msg = await reply_msg.edit_text(
                     "<b><i>I Am Trying To Find Your File With Your Wrong Spelling using Google books api...</i></b>"
                 )
-                await asyncio.sleep(2)
 
             google_titles_api = await fetch_google_titles(mv_rqst)
         except Exception as e:
@@ -2972,7 +2971,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             # No Google results either, fallback to plain Google button
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[
-                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ ", url=f"https://www.google.com/search?q={reqst_gle}")
+                InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ Sᴘᴇʟʟ Yᴏᴜʀsᴇʟғ ", url=f"https://www.google.com/search?q={reqst_gle}")
             ]]
 
             if NO_RESULTS_MSG:
@@ -3027,7 +3026,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
 
         if NO_RESULTS_MSG :

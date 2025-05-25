@@ -203,7 +203,10 @@ Please check your spelling and try again. 😃
 
 File/Book/Audiobook Request Format 👇
 
-Example:#request Rich Dad Poor Dad or /request Rich Dad Poor Dad Audiobook </b>"""
+Example:#request Rich Dad Poor Dad or /request Rich Dad Poor Dad Audiobook </b>
+
+If Result is Not Found, Use /Search BookName
+"""
 
     I_CUD_NT = """ɪ ᴄᴏᴜʟᴅɴ'ᴛ ꜰɪɴᴅ ᴀɴʏ Book/Audiobook ʀᴇʟᴀᴛᴇᴅ ᴛᴏ {}.
 ᴘʟᴇᴀꜱᴇ ᴄʜᴇᴄᴋ ᴛʜᴇ ꜱᴘᴇʟʟɪɴɢ ᴏɴ ɢᴏᴏɢʟᴇ ᴏʀ ɪᴍᴅʙ..."""
