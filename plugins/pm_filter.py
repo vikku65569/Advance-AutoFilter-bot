@@ -3021,7 +3021,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                         reply_markup=buttons,
                         parse_mode=enums.ParseMode.HTML
                     )
-                    return  # Stop further processing once LibGen result is shown
+                    # return  # Stop further processing once LibGen result is shown
 
             
         reqst_gle = mv_rqst.replace(" ", "+")
