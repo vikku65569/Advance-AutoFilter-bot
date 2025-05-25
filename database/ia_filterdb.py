@@ -9,6 +9,10 @@ from info import FILE_DB_URI, SEC_FILE_DB_URI, DATABASE_NAME, COLLECTION_NAME, M
 from googlesearch import search
 import aiohttp
 
+from bs4 import BeautifulSoup
+from fuzzywuzzy import fuzz
+from urllib.parse import urlparse
+
 
 # First Database For File Saving 
 client = MongoClient(FILE_DB_URI)
@@ -200,49 +204,78 @@ async def fetch_google_titles(query: str, limit=5) -> list[str]:
 
 BOOK_DOMAINS = [
     "goodreads.com", "openlibrary.org", "books.google.com",
-    "bookbub.com", "bookdepository.com", "amazon.com", "kobo.com"
+    "bookbub.com", "bookdepository.com", "amazon.com", "kobo.com",
+    "barnesandnoble.com", "bookshop.org", "storytel.com"
 ]
 
 def is_book_url(url: str) -> bool:
-    """Check if the URL belongs to a known book-related domain or path."""
-    for domain in BOOK_DOMAINS:
-        if domain in url:
-            return True
-    # Extra check: path contains "book", "novel", "read", etc.
-    if re.search(r"/(book|novel|read|title)/", url, re.IGNORECASE):
+    """Improved book URL detection"""
+    parsed = urlparse(url)
+    # Check domain first
+    if any(domain in parsed.netloc for domain in BOOK_DOMAINS):
         return True
-    return False
+    # Check path patterns
+    path = parsed.path.lower()
+    return any(part in path for part in ["book", "novel", "title", "work"])
 
-
-def count_numbers(text: str) -> int:
-    return sum(c.isdigit() for c in text)
+async def fetch_page_title(url: str) -> str:
+    """Fetch HTML page title from URL"""
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(10)) as session:
+            async with session.get(url, allow_redirects=True) as response:
+                if response.status == 200:
+                    html = await response.text()
+                    soup = BeautifulSoup(html, 'html.parser')
+                    title = soup.title.string.strip() if soup.title else ""
+                    # Clean common title suffixes
+                    title = re.sub(r"\s*[-|·:·]\s*.*$", "", title)
+                    return title
+    except Exception:
+        return ""
 
 async def get_google_titles(query: str, limit=5) -> list:
-    results = list(search(query + " book", num_results=limit * 2))
+    """Get book titles with fuzzy matching for misspellings"""
+    search_query = f"{query} book"
+    results = list(search(search_query, num_results=15, lang="en"))
+    
     titles = []
-
+    seen = set()
+    
     for url in results:
         if not is_book_url(url):
             continue
-
-        parts = url.rstrip('/').split("/")
-        last_part = parts[-1] if parts else ""
-
-        raw_title = last_part.replace(".html", "")
-        title = re.sub(r"[-+._%20&$#@!]", " ", raw_title)
-        title = re.sub(r"\s+", " ", title).strip()
-
-        # If more than 2 digits, strip out _all_ digits from the string
-        if count_numbers(title) > 2:
-            title = re.sub(r"\d", "", title)
-            title = re.sub(r"\s+", " ", title).strip()
-
-        # Now skip if it's still junk (too short or fully numeric)
-        if len(title.split()) < 2 or title.isdigit():
+            
+        # Get actual page title instead of URL parsing
+        title = await fetch_page_title(url)
+        if not title:
             continue
-
-        titles.append(title.title())
-        if len(titles) >= limit:
+            
+        # Clean title
+        clean_title = re.sub(r"[^a-zA-Z0-9\s]", " ", title).strip()
+        clean_title = re.sub(r"\s+", " ", clean_title)
+        
+        # Skip if title doesn't look book-like
+        if len(clean_title.split()) < 2 or len(clean_title) < 5:
+            continue
+            
+        # Fuzzy match with original query
+        score = fuzz.token_set_ratio(query.lower(), clean_title.lower())
+        if score < 65:  # Adjust threshold as needed
+            continue
+            
+        # Deduplicate
+        key = clean_title.lower()
+        if key not in seen:
+            seen.add(key)
+            titles.append({
+                "title": clean_title.title(),
+                "score": score,
+                "url": url
+            })
+            
+        if len(titles) >= limit * 2: # Collect extra for sorting
             break
-
-    return titles
+            
+    # Sort by fuzzy match score and return best matches
+    sorted_titles = sorted(titles, key=lambda x: x["score"], reverse=True)
+    return [t["title"] for t in sorted_titles[:limit]]
