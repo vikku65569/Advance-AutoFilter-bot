@@ -492,7 +492,7 @@ async def filter_yearss_cb_handler(client: Client, query: CallbackQuery):
         except MessageNotModified:
             pass
     await query.answer()  
-    
+
 # Episode
 @Client.on_callback_query(filters.regex(r"^episodes#"))
 async def episodes_cb_handler(client: Client, query: CallbackQuery):
@@ -2667,7 +2667,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
             #     else:
             #         return await reply_msg.edit_text(f"**⚠️ No File Found For Your Query - {name}**\n**Make Sure Spelling Is Correct.**")
 
-            if not files:
+            if not files: #uf no files found
                 
                 if settings["spell_check"]:
                     return await advantage_spell_chok(client, name, msg, reply_msg, ai_search)
@@ -2711,6 +2711,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
                     return await reply_msg.edit_text(original_message)
 
         else:
+            await reply_msg.edit_text("⚠️ Your message is too long. Please enter a shorter query (less than 100 characters).")
             return
     else:
         message = msg.message.reply_to_message  # msg will be callback query
@@ -2723,6 +2724,7 @@ async def auto_filter(client, name, msg, reply_msg, ai_search, spoll=False):
     FRESH[key] = search
     temp.GETALL[key] = files
     temp.SHORT[message.from_user.id] = message.chat.id
+
     if settings["button"]:
         btn = [
             [
@@ -2896,14 +2898,14 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
     query = query.strip() + " book"
 
-    # search for the book in library
+    # search for the book in zlibreary library
     try:
         movies = await get_poster(mv_rqst, bulk=True)
-    except Exception as e:
+    except Exception as e: #if zlibreary is down or any other error
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ  failed zlibreary", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
 
         if NO_RESULTS_MSG:
@@ -2915,10 +2917,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
 
     
     movielist = []
-    if not movies:
+    if not movies:  #if no movies found in zlibreary
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")
+            InlineKeyboardButton("Gᴏᴏɢʟᴇ no poster in zlibreary", url=f"https://www.google.com/search?q={reqst_gle}")
         ]]
 
         if NO_RESULTS_MSG:
@@ -2928,8 +2930,8 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         await k.delete()
         return
     
-    movielist += [movie.get('title') for movie in movies]
-    movielist += [f"{movie.get('title')}"for movie in movies]
+    # if movies found, extract titles
+    movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
 
 
