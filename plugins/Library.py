@@ -10,7 +10,7 @@ from Script import *
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pyrogram import Client, filters, enums
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
 from database.users_chats_db import db  # Assuming you have a database module for logging
@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 USER_LOCKS = defaultdict(asyncio.Lock)
 LAST_PROGRESS_UPDATE = defaultdict(lambda: (0, datetime.min))
 search_cache = {}
+
+ACTIVE_DOWNLOADS = {}
 RESULTS_PER_PAGE = 10
 
 def escape_markdown(text: str) -> str:
@@ -75,14 +77,22 @@ async def create_search_buttons(results: list, search_key: str, page: int):
 
     return InlineKeyboardMarkup(buttons)
 
-# In your download_libgen_file function, modify the progress section:
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
-    """Reusable file downloader with progress and retries"""
+    """Reusable file downloader with progress, retries, and cancellation"""
     last_percent = -1
     last_message = ""
     max_retries = 3
-    retry_delay = 5  # seconds
+    retry_delay = 5
+    stop_flag = False
     
+    # Add cancel button to progress message
+    cancel_button = InlineKeyboardMarkup([[InlineKeyboardButton("🚫 Cancel Download", callback_data=f"cancel_{user_id}")]])
+    
+    try:
+        await progress_msg.edit("⬇️ Downloading file... (0%)", reply_markup=cancel_button)
+    except Exception as e:
+        logger.warning(f"Progress message update failed: {e}")
+
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3600)) as session:
         for attempt in range(max_retries):
             try:
@@ -93,12 +103,22 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                     total_size = int(response.headers.get('content-length', 0)) or None
                     downloaded = 0
                     
+                    # Register active download
+                    ACTIVE_DOWNLOADS[user_id] = {
+                        'cancelled': False,
+                        'path': temp_path
+                    }
+                    
                     async with aiofiles.open(temp_path, 'wb') as f:
-                        async for chunk in response.content.iter_chunked(1024*1024*2):  # 2MB chunks
+                        async for chunk in response.content.iter_chunked(1024*1024*2):
+                            if ACTIVE_DOWNLOADS.get(user_id, {}).get('cancelled', False):
+                                stop_flag = True
+                                break
+                                
                             if not chunk:
                                 continue
-                            
-                            # Retry chunk writing up to 3 times
+
+                            # Existing chunk writing logic remains
                             for write_attempt in range(3):
                                 try:
                                     await f.write(chunk)
@@ -107,10 +127,10 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                                     if write_attempt == 2:
                                         raise
                                     await asyncio.sleep(1)
-                            
+
                             downloaded += len(chunk)
                             
-                            # Progress updates
+                            # Progress updates with cancel button
                             if total_size:
                                 current_time = datetime.now()
                                 percent = round((downloaded / total_size) * 100)
@@ -118,32 +138,37 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                                 
                                 if (percent != last_percent and percent - last_percent >= 1) or \
                                    (current_time - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2)):
-                                    
-                                    if message != last_message:
-                                        try:
-                                            await progress_msg.edit(message)
-                                            last_percent = percent
-                                            last_message = message
-                                            LAST_PROGRESS_UPDATE[user_id] = (percent, current_time)
-                                        except Exception as e:
-                                            if "MESSAGE_NOT_MODIFIED" not in str(e):
-                                                logger.warning(f"Progress update failed: {e}")
-                                # Force periodic updates for large files
+                                    try:
+                                        await progress_msg.edit(
+                                            message,
+                                            reply_markup=cancel_button
+                                        )
+                                        last_percent = percent
+                                        LAST_PROGRESS_UPDATE[user_id] = (percent, current_time)
+                                    except Exception as e:
+                                        if "MESSAGE_NOT_MODIFIED" not in str(e):
+                                            logger.warning(f"Progress update failed: {e}")
                                 elif total_size > 30*1024*1024 and current_time - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=10):
                                     try:
-                                        await progress_msg.edit(f"⬇️ Downloading large file... ({downloaded//1024//1024}MB/{total_size//1024//1024}MB)")
-                                        LAST_PROGRESS_UPDATE[user_id] = (percent, current_time)
+                                        await progress_msg.edit(
+                                            f"⬇️ Downloading large file... ({downloaded//1024//1024}MB/{total_size//1024//1024}MB)",
+                                            reply_markup=cancel_button
+                                        )
                                     except:
                                         pass
-                    # If we reach here, download completed successfully
+
+                    if stop_flag:
+                        raise Exception("Download cancelled by user")
                     return
 
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                if attempt < max_retries - 1:
+                if attempt < max_retries - 1 and not stop_flag:
                     logger.warning(f"Download attempt {attempt+1} failed: {str(e)}, retrying...")
                     await asyncio.sleep(retry_delay)
                     continue
                 raise
+            finally:
+                ACTIVE_DOWNLOADS.pop(user_id, None)
             break
 
 # In your upload_to_telegram function, modify the progress callback:
@@ -423,3 +448,26 @@ async def handle_download_callback(client, callback_query):
         except Exception as e:
             logger.error(f"Callback error: {e}")
             await callback_query.answer("❌ Error processing request")
+
+
+@Client.on_callback_query(filters.regex(r"^cancel_"))
+async def handle_cancel_download(client, callback_query: CallbackQuery):
+    user_id = int(callback_query.data.split('_')[1])
+    
+    if user_id in ACTIVE_DOWNLOADS:
+        ACTIVE_DOWNLOADS[user_id]['cancelled'] = True
+        temp_path = ACTIVE_DOWNLOADS[user_id]['path']
+        
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as e:
+                logger.error(f"Failed to delete cancelled file: {e}")
+        
+        await callback_query.answer("Download cancelled!")
+        try:
+            await callback_query.message.edit("❌ Download cancelled by user")
+        except Exception as e:
+            logger.error(f"Failed to update cancellation message: {e}")
+    else:
+        await callback_query.answer("No active download to cancel")
