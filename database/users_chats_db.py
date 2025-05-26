@@ -1,12 +1,15 @@
 
 
 import re
+import logging
 from pymongo.errors import DuplicateKeyError
 import motor.motor_asyncio
 from pymongo import MongoClient
 from info import DATABASE_NAME, USER_DB_URI, OTHER_DB_URI, CUSTOM_FILE_CAPTION, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, BUTTON_MODE, SPELL_CHECK_REPLY, PROTECT_CONTENT, AUTO_DELETE, MAX_BTN, AUTO_FFILTER, SHORTLINK_API, SHORTLINK_URL, SHORTLINK_MODE, TUTORIAL, IS_TUTORIAL
 import time
 import datetime
+
+logger = logging.getLogger(__name__)
 
 my_client = MongoClient(OTHER_DB_URI)
 mydb = my_client["referal_user"]
@@ -306,19 +309,23 @@ class Database:
         user = await self.col.find_one({'id': int(id)})
         return user.get('save', False) 
     
-
-    async def is_title_exists(self, title: str):
-        """Check if title exists in file store"""
-        return bool(await self.db.file_titles.find_one({"title": title.strip().lower()}))
+    async def is_title_exists(self, clean_title: str):
+        """Check if cleaned title exists in file store"""
+        return bool(await self.db.file_titles.find_one({"title": clean_title}))
     
-    async def add_file_title(self, title: str):
-        """Add new title to database"""
+    async def add_file_title(self, clean_title: str):
+        """Add new cleaned title to database"""
+        if not clean_title:
+            return  # Skip empty titles
+            
         try:
             await self.db.file_titles.insert_one({
-                "title": title.strip().lower(),
+                "title": clean_title,
                 "added_at": datetime.datetime.now()
             })
         except DuplicateKeyError:
-            pass
+            logger.debug(f"Title already exists: {clean_title}")
+
+
 
 db = Database(USER_DB_URI, DATABASE_NAME)

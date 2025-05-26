@@ -170,26 +170,24 @@ async def log_download(client, temp_path: str, book: dict, callback_query):
         raw_title = book.get('Title', '').strip()
         clean_title = raw_title.lower()
 
+           
+        if not clean_title:
+            logger.warning("Skipping empty title for file store")
+            return
+
         # Check if title exists in database
-        if not await db.is_title_exists(raw_title):
+        if not await db.is_title_exists(clean_title):
             # Send to file store channel if new title
             await client.send_document(
                 FILE_STORE_CHANNEL,
-                document=temp_path,
-                caption=(
-                    f"📚 New File Added to Library:\n"
-                    f"📖 Title: {escape_markdown(raw_title)}\n"
-                    f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
-                    f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}"
-                ),
-                parse_mode=enums.ParseMode.HTML
+                document=temp_path
             )
             
             # Store title in database
-            await db.add_file_title(raw_title)
+            await db.add_file_title(clean_title)
 
     except Exception as log_error:
-        logger.error(f"Failed to handle file logging: {log_error}")
+        logger.error(f"Failed to handle file logging: {log_error}", exc_info=True)
 
 @Client.on_message(filters.command('search') & filters.private)
 async def handle_search_command(client, message):
