@@ -1,6 +1,7 @@
 import logging
 import asyncio
 import urllib.parse
+import json
 from uuid import uuid4
 from info import *
 from Script import *
@@ -11,6 +12,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
 from database.users_chats_db import db
+import aiohttp
 
 # Initialize LibgenSearch instance
 lg = LibgenSearch()
@@ -26,15 +28,38 @@ def escape_markdown(text: str) -> str:
     return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 async def libgen_search(query: str):
-    """Reusable search function"""
+    """Reusable search function with error handling"""
     try:
-        default_results = lg.search_default(query)
-        filtered_results = lg.search_title_filtered(query, filters={}, exact_match=True)
-        search_default_filtered = lg.search_default_filtered(query, filters={}, exact_match=False)
-        return filtered_results + default_results + search_default_filtered
-    except FloodWait as e:
-        await asyncio.sleep(e.value + 2)
-        return lg.search_title(query)
+        try:
+            default_results = lg.search_default(query)
+            filtered_results = lg.search_title_filtered(query, filters={}, exact_match=True)
+            search_default_filtered = lg.search_default_filtered(query, filters={}, exact_match=False)
+            return filtered_results + default_results + search_default_filtered
+        except json.JSONDecodeError:
+            return lg.search_title(query)
+    except Exception as e:
+        logger.error(f"Libgen search error: {str(e)}")
+        return None
+
+async def validate_download_url(url: str):
+    """Validate if URL is accessible and contains valid content"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.head(url, headers=headers, timeout=10) as response:
+                if response.status != 200:
+                    return False
+                content_type = response.headers.get('Content-Type', '').lower()
+                valid_types = ['application/pdf', 'epub', 'octet-stream', 'text']
+                if not any(x in content_type for x in valid_types):
+                    return False
+                return True
+        except Exception as e:
+            logger.error(f"URL validation failed: {str(e)}")
+            return False
 
 async def create_search_buttons(results: list, search_key: str, page: int):
     """Create paginated inline keyboard markup"""
@@ -57,7 +82,6 @@ async def create_search_buttons(results: list, search_key: str, page: int):
             )
         ])
 
-    # Pagination controls
     pagination = []
     if page > 1:
         pagination.append(InlineKeyboardButton("⌫ Back", callback_data=f"lgpage_{search_key}_{page-1}"))
@@ -92,7 +116,6 @@ async def handle_auto_delete(client, sent_msg, chat_id: int):
 async def log_download(client, download_url: str, book: dict, callback_query):
     """Log download to channels with title-based duplicate prevention"""
     try:
-        # Send to regular log channel with direct URL
         await client.send_document(
             int(LOG_CHANNEL),
             document=download_url,
@@ -107,16 +130,13 @@ async def log_download(client, download_url: str, book: dict, callback_query):
             parse_mode=enums.ParseMode.HTML
         )
 
-        # File store handling with URL
         raw_title = str(book.get('Title', '')).strip()
         clean_title = raw_title.lower().strip()
         
         if not clean_title or clean_title == 'unknown':
-            logger.warning("Skipping invalid title for file store")
             return
 
         if not await db.is_title_exists(clean_title):
-            logger.info(f"New title detected: {clean_title}")
             SINGle_FILE_STORE_CHANNEL = FILE_STORE_CHANNEL[0]
             await client.send_document(
                 int(SINGle_FILE_STORE_CHANNEL),
@@ -132,11 +152,14 @@ async def handle_search_command(client, message):
     """Handle /search command with pagination"""
     try:
         query = message.text.split(' ', 1)[1]
+        if len(query) < 3:
+            return await message.reply("❌ Search query too short (min 3 characters)")
+            
         progress_msg = await message.reply("🔍 Searching in The Torrent Servers of Magical Library...")
         
         results = await libgen_search(query)
         if not results:
-            return await progress_msg.edit("❌ No results found for your query.")
+            return await progress_msg.edit("❌ Service unavailable. Please try again later.")
 
         search_key = str(uuid4())
         search_cache[search_key] = {
@@ -165,7 +188,7 @@ async def handle_search_command(client, message):
                           parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
         logger.error(f"Search error: {e}")
-        await message.reply(f"❌ Search failed: {str(e)}")
+        await message.reply("❌ Search failed due to server issues. Please try again later.")
 
 @Client.on_callback_query(filters.regex(r"^lgpage_"))
 async def handle_pagination(client, callback_query):
@@ -209,7 +232,7 @@ async def handle_pagination(client, callback_query):
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_download_callback(client, callback_query):
-    """Handle download callback queries"""
+    """Handle download callback queries with improved validation"""
     user_id = callback_query.from_user.id
     async with USER_LOCKS[user_id]:
         try:
@@ -232,37 +255,43 @@ async def handle_download_callback(client, callback_query):
                 await callback_query.answer("❌ No direct download available")
                 return
 
+            if not (await validate_download_url(download_url)):
+                await callback_query.answer("❌ Invalid download link")
+                return
+
             await callback_query.answer("📥 Starting download...")
-            progress_msg = await callback_query.message.reply("⏳ Processing your request...")
+            progress_msg = await callback_query.message.reply("⏳ Verifying file availability...")
 
             try:
-                # Directly send the document URL to Telegram
-                await progress_msg.edit("📤 Sending file via Telegram...")
-                sent_msg = await client.send_document(
-                    chat_id=callback_query.message.chat.id,
-                    document=download_url,
-                    caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}"
-                )
-
-                await handle_auto_delete(client, sent_msg, callback_query.message.chat.id)
-                await log_download(client, download_url, book, callback_query)
-                await progress_msg.delete()
-
-            except FloodWait as e:
-                await progress_msg.edit(f"⚠️ Flood wait: Please wait {e.value} seconds")
-                await asyncio.sleep(e.value)
-                sent_msg = await client.send_document(
-                    chat_id=callback_query.message.chat.id,
-                    document=download_url,
-                    caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}"
-                )
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        sent_msg = await client.send_document(
+                            chat_id=callback_query.message.chat.id,
+                            document=download_url,
+                            caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}",
+                            request_timeout=30
+                        )
+                        break
+                    except FloodWait as e:
+                        await asyncio.sleep(e.value)
+                    except TimeoutError:
+                        if attempt == max_retries - 1:
+                            raise
+                        await asyncio.sleep(2 ** attempt)
+                
                 await handle_auto_delete(client, sent_msg, callback_query.message.chat.id)
                 await log_download(client, download_url, book, callback_query)
                 await progress_msg.delete()
 
             except Exception as e:
-                logger.error(f"Download error: {str(e)}", exc_info=True)
-                await progress_msg.edit(f"❌ Failed to send file: {str(e)}")
+                error_msg = "Failed to send file: "
+                if "WEBPAGE_MEDIA_EMPTY" in str(e):
+                    error_msg += "Invalid file URL (server might block Telegram)"
+                else:
+                    error_msg += str(e)
+                
+                await progress_msg.edit(f"❌ {error_msg}")
                 await asyncio.sleep(5)
 
         except Exception as e:
