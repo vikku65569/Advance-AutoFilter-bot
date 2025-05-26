@@ -14,6 +14,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
 from database.users_chats_db import db  # Assuming you have a database module for logging
+from json import JSONDecodeError
 
 # Initialize LibgenSearch instance
 lg = LibgenSearch()
