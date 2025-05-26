@@ -14,6 +14,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
 from database.users_chats_db import db  # Assuming you have a database module for logging
+import shutil
 
 # Initialize LibgenSearch instance
 lg = LibgenSearch()
@@ -349,6 +350,7 @@ async def handle_pagination(client, callback_query):
         logger.error(f"Pagination error: {e}")
         await callback_query.answer("Error handling pagination!")
 
+
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_download_callback(client, callback_query):
     """Handle download callback queries"""
@@ -373,6 +375,56 @@ async def handle_download_callback(client, callback_query):
             if not (download_url := book.get('Direct_Download_Link')):
                 await callback_query.answer("❌ No direct download available")
                 return
+
+            # New resource check implementation
+            def format_bytes(size):
+                units = ['B', 'KB', 'MB', 'GB', 'TB']
+                unit_index = 0
+                while size >= 1024 and unit_index < len(units)-1:
+                    size /= 1024
+                    unit_index += 1
+                return f"{size:.2f} {units[unit_index]}"
+
+            def get_disk_usage():
+                usage = shutil.disk_usage(os.getcwd())
+                return {
+                    'total': format_bytes(usage.total),
+                    'used': format_bytes(usage.used),
+                    'free': format_bytes(usage.free),
+                    'free_bytes': usage.free
+                }
+
+            def parse_size(size_str):
+                try:
+                    if 'MiB' in size_str or 'MB' in size_str:
+                        return float(size_str.split()[0])
+                    elif 'GiB' in size_str or 'GB' in size_str:
+                        return float(size_str.split()[0]) * 1024
+                    elif 'KiB' in size_str or 'KB' in size_str:
+                        return float(size_str.split()[0]) / 1024
+                    return 0
+                except:
+                    return 0
+
+            # Check if file is over 50MB
+            file_size_mb = parse_size(book.get('Size', '0 MiB'))
+            if file_size_mb > 50:
+                disk = get_disk_usage()
+                required_space = file_size_mb * 2 * 1024 * 1024  # Double the file size in bytes
+                
+                if disk['free_bytes'] < required_space:
+                    resource_msg = (
+                        "⚠️ Server Resources Exhausted!\n\n"
+                        f"File Size: {file_size_mb:.1f}MB\n"
+                        f"Available Space: {disk['free']}\n"
+                        f"Total Space: {disk['total']}\n\n"
+                        "Please try:\n"
+                        "1. Smaller files\n"
+                        "2. Later when space is available"
+                    )
+                    await callback_query.message.reply(resource_msg)
+                    await callback_query.answer()
+                    return
 
             await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
@@ -407,7 +459,6 @@ async def handle_download_callback(client, callback_query):
                 await log_download(client, temp_path, book, callback_query)
                 await progress_msg.delete()
 
-            # In handle_download_callback
             except Exception as e:
                 logger.error(f"Download error: {str(e) or 'Unknown error'}", exc_info=True)
                 await progress_msg.edit(f"❌ Download failed: {str(e) or 'Unknown error'}")
