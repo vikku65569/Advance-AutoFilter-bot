@@ -74,9 +74,11 @@ async def create_search_buttons(results: list, search_key: str, page: int):
 
     return InlineKeyboardMarkup(buttons)
 
+# In your download_libgen_file function, modify the progress section:
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
     """Reusable file downloader with progress"""
     last_percent = -1
+    last_message = ""
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status != 200:
@@ -93,34 +95,49 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                     downloaded += len(chunk)
                     
                     if total_size:
+                        current_time = datetime.now()
                         percent = round((downloaded / total_size) * 100)
-                        now = datetime.now()
+                        message = f"⬇️ Downloading file... ({percent}%)"
                         
-                        if percent != last_percent and (
-                            percent - last_percent >= 1 or 
-                            now - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2)
-                        ):
-                            try:
-                                await progress_msg.edit(f"⬇️ Downloading file... ({percent}%)")
-                                last_percent = percent
-                                LAST_PROGRESS_UPDATE[user_id] = (percent, now)
-                            except Exception as e:
-                                logger.warning(f"Progress update failed: {e}")
+                        # Update conditions: min 1% change or 2 seconds passed
+                        if (percent != last_percent and percent - last_percent >= 1) or \
+                           (current_time - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2)):
+                            
+                            if message != last_message:
+                                try:
+                                    await progress_msg.edit(message)
+                                    last_percent = percent
+                                    last_message = message
+                                    LAST_PROGRESS_UPDATE[user_id] = (percent, current_time)
+                                except Exception as e:
+                                    if "MESSAGE_NOT_MODIFIED" not in str(e):
+                                        logger.warning(f"Progress update failed: {e}")
 
+
+# In your upload_to_telegram function, modify the progress callback:
 async def upload_to_telegram(client, temp_path: str, book: dict, progress_msg, chat_id: int, user_id: int):
     """Reusable Telegram uploader with progress"""
     last_percent = -1
+    last_message = ""
     
     async def progress(current, total):
-        nonlocal last_percent
+        nonlocal last_percent, last_message
         percent = round(current * 100 / total)
+        message = f"📤 Uploading... ({percent}%)"
         now = datetime.now()
-        if percent != last_percent or now - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2):
-            try:
-                await progress_msg.edit(f"📤 Uploading... ({percent}%)")
-                LAST_PROGRESS_UPDATE[user_id] = (percent, now)
-            except Exception as e:
-                logger.warning(f"Upload progress update failed: {e}")
+        
+        if (percent != last_percent and percent - last_percent >= 1) or \
+           (now - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2)):
+            
+            if message != last_message:
+                try:
+                    await progress_msg.edit(message)
+                    last_percent = percent
+                    last_message = message
+                    LAST_PROGRESS_UPDATE[user_id] = (percent, now)
+                except Exception as e:
+                    if "MESSAGE_NOT_MODIFIED" not in str(e):
+                        logger.warning(f"Upload progress update failed: {e}")
 
     return await client.send_document(
         chat_id=chat_id,
