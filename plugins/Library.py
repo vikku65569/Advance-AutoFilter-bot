@@ -90,6 +90,12 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                         raise Exception(f"Download failed with status {response.status}")
 
                     total_size = int(response.headers.get('content-length', 0)) or None
+
+                     # Check if file is larger than 10 MB
+                    if total_size and total_size > 10 * 1024 * 1024:
+                        await progress_msg.edit("❌ File is larger than 10 MB and cannot be downloaded.")
+                        return
+                    
                     downloaded = 0
                     
                     async with aiofiles.open(temp_path, 'wb') as f:
