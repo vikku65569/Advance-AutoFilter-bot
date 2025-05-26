@@ -30,34 +30,63 @@ def escape_markdown(text: str) -> str:
     return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 async def libgen_search(query: str):
-    """Reusable search function with enhanced error handling"""
+    """Reusable search function with enhanced validation"""
+    valid_results = []
+    
+    def validate_result(result: dict) -> bool:
+        """Validate individual result structure"""
+        required_keys = ['ID', 'Author', 'Title', 'Direct_Download_Link']
+        return all(key in result for key in required_keys) and isinstance(result, dict)
+
     try:
-        # Attempt primary search methods
-        default_results = lg.search_default(query)
-        filtered_results = lg.search_title_filtered(query, filters={}, exact_match=True)
-        search_default_filtered = lg.search_default_filtered(query, filters={}, exact_match=False)
+        # Attempt different search methods with individual error handling
+        search_methods = [
+            ('default', lambda: lg.search_default(query)),
+            ('title_filtered', lambda: lg.search_title_filtered(query, filters={}, exact_match=True)),
+            ('default_filtered', lambda: lg.search_default_filtered(query, filters={}, exact_match=False))
+        ]
+
+        for method_name, method in search_methods:
+            try:
+                results = method()
+                if not isinstance(results, list):
+                    logger.warning(f"Invalid results type from {method_name}: {type(results)}")
+                    continue
+                    
+                # Validate and process results
+                for result in results:
+                    if validate_result(result):
+                        valid_results.append(result)
+                    else:
+                        logger.warning(f"Invalid result structure from {method_name}: {result}")
+                        
+            except JSONDecodeError as jde:
+                logger.error(f"JSON error in {method_name} search: {str(jde)}")
+            except Exception as e:
+                logger.error(f"Error in {method_name} search: {str(e)}")
+
+        # Remove duplicates using ID field
+        seen_ids = set()
+        unique_results = []
+        for result in valid_results:
+            if result['ID'] not in seen_ids:
+                seen_ids.add(result['ID'])
+                unique_results.append(result)
         
-        # Validate results before combining
-        valid_results = []
-        for result in [default_results, filtered_results, search_default_filtered]:
-            if isinstance(result, list):
-                valid_results.extend(result)
-            else:
-                logger.warning(f"Unexpected result type: {type(result)}")
-        
-        return valid_results
-        
+        return unique_results
+
     except FloodWait as e:
         await asyncio.sleep(e.value + 2)
         try:
-            # Fallback search with validation
+            # Fallback to basic title search
             fallback_results = lg.search_title(query)
-            return fallback_results if isinstance(fallback_results, list) else []
-        except Exception as fallback_error:
-            logger.error(f"LibGen fallback error: {str(fallback_error)}", exc_info=True)
+            return [res for res in fallback_results if validate_result(res)] if isinstance(fallback_results, list) else []
+        except Exception as e:
+            logger.error(f"Fallback search error: {str(e)}")
             return []
+            
     except Exception as main_error:
-        logger.error(f"Main search error: {str(main_error)}", exc_info=True)
+        logger.error(f"Main search error: {str(main_error)}")
         return []
 
 async def create_search_buttons(results: list, search_key: str, page: int):
