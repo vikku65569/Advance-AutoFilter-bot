@@ -18,6 +18,7 @@ from urllib.parse import quote_plus
 from Zahid.util.file_properties import get_name, get_hash, get_media_file_size
 from plugins.Library import *
 from googlesearch import search
+from difflib import SequenceMatcher
 
 
 logger = logging.getLogger(__name__)
@@ -2987,42 +2988,62 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     movielist = [movie.get('title') for movie in movies]
     SPELL_CHECK[mv_id] = movielist
 
-
-    if AI_SPELL_CHECK == True and vj_search == True:
-        movienamelist = []
-        movienamelist += [movie.get('title') for movie in movies]
-
+    # Inside your existing code:
+    if AI_SPELL_CHECK and vj_search:  # Simplified boolean check
+        movienamelist = [movie.get('title') for movie in movies]
+        
+        # Find best matching title using fuzzy logic
+        best_match = None
+        highest_ratio = 0
+        
         for Zahid in movienamelist:
+            # Calculate similarity between query and title
+            similarity = SequenceMatcher(
+                None, 
+                mv_rqst.lower(),  # Case-insensitive comparison
+                Zahid.lower()
+            ).ratio()
             
-            if mv_rqst.startswith(Zahid):
-                await reply_msg.edit_text(f"🔍 Doing a deep search for '{Zahid}'...")
+            # Track the best match
+            if similarity > highest_ratio:
+                highest_ratio = similarity
+                best_match = Zahid
 
-                results = await libgen_search(Zahid)
+        # Only proceed if we found a reasonably good match
+        if best_match and highest_ratio >= 0.6:  # Adjust threshold as needed (0-1)
+            await reply_msg.edit_text(f"🔍 Doing deep search for '{best_match}'...")
+            
+            try:
+                results = await libgen_search(best_match)  # Search with best match
+            except Exception as e:
+                logger.error(f"LibGen search failed: {e}")
+                results = []
 
-                if results:
-                    search_key = str(uuid4())
-                    search_cache[search_key] = {
-                        'results': results,
-                        'query': Zahid,
-                        'time': datetime.now()
-                    }
+            if results:
+                search_key = str(uuid4())
+                search_cache[search_key] = {
+                    'results': results,
+                    'query': best_match,
+                    'time': datetime.now()
+                }
 
-                    buttons = await create_search_buttons(results, search_key, 1)
+                buttons = await create_search_buttons(results, search_key, 1)
 
-                    response = [
-                        f"📚 Found {len(results)} LibGen results for <b>{Zahid}</b>:",
-                        f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
-                        f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-                        f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
-                    ]
+                response = [
+                    f"📚 Found {len(results)} LibGen results for <b>{best_match}</b>:",
+                    f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
+                    f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
+                    f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
+                ]
 
-                    await reply_msg.edit(
-                        "\n".join(response),
-                        reply_markup=buttons,
-                        parse_mode=enums.ParseMode.HTML
-                    )
-                    return  # Stop further processing once LibGen result is shown
+                await reply_msg.edit(
+                    "\n".join(response),
+                    reply_markup=buttons,
+                    parse_mode=enums.ParseMode.HTML
+                )
+                return  # Stop processing after showing results
 
+        # If no good match found, continue to existing Google fallback
             
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
