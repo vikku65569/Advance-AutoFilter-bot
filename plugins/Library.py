@@ -41,25 +41,50 @@ async def libgen_search(query: str):
         logger.error(f"Libgen search error: {str(e)}")
         return None
 
+async def process_libgen_url(url: str) -> str:
+    """Fix Libgen URL encoding issues"""
+    # Decode URL components first
+    decoded_url = urllib.parse.unquote(url)
+    # Re-encode special characters except /
+    return urllib.parse.quote(decoded_url, safe="/:")
+
 async def validate_download_url(url: str):
     """Validate if URL is accessible and contains valid content"""
+    processed_url = await process_libgen_url(url)
+    
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Referer": "https://libgen.rs/",  # Add required Referer header
+        "Accept-Language": "en-US,en;q=0.9",
     }
     
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.head(url, headers=headers, timeout=10) as response:
+            # Use GET instead of HEAD to better simulate browser behavior
+            async with session.get(
+                processed_url,
+                headers=headers,
+                timeout=15,
+                allow_redirects=True,
+                verify_ssl=False
+            ) as response:
                 if response.status != 200:
-                    return False
+                    return False, processed_url
+                
+                # Check content type and content existence
                 content_type = response.headers.get('Content-Type', '').lower()
-                valid_types = ['application/pdf', 'epub', 'octet-stream', 'text']
-                if not any(x in content_type for x in valid_types):
-                    return False
-                return True
+                if not any(x in content_type for x in ['pdf', 'epub', 'octet-stream']):
+                    return False, processed_url
+                
+                # Verify actual content is present
+                content = await response.content.read(1024)
+                if not content:
+                    return False, processed_url
+                
+                return True, processed_url
         except Exception as e:
             logger.error(f"URL validation failed: {str(e)}")
-            return False
+            return False, processed_url
 
 async def create_search_buttons(results: list, search_key: str, page: int):
     """Create paginated inline keyboard markup"""
@@ -255,7 +280,9 @@ async def handle_download_callback(client, callback_query):
                 await callback_query.answer("❌ No direct download available")
                 return
 
-            if not (await validate_download_url(download_url)):
+            # Use the URL processing and validation
+            is_valid, processed_url = await validate_download_url(download_url)
+            if not is_valid:
                 await callback_query.answer("❌ Invalid download link")
                 return
 
@@ -268,7 +295,14 @@ async def handle_download_callback(client, callback_query):
                     try:
                         sent_msg = await client.send_document(
                             chat_id=callback_query.message.chat.id,
-                            document=download_url
+                            document=processed_url,
+                            caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}",
+                            # Add browser-like headers and filename
+                            file_name=f"{book.get('Title', 'file')[:40]}.{book.get('Extension', 'pdf')}",
+                            headers={
+                                "Referer": "https://libgen.rs/",
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                            }
                         )
                         break
                     except FloodWait as e:
@@ -279,13 +313,15 @@ async def handle_download_callback(client, callback_query):
                         await asyncio.sleep(2 ** attempt)
                 
                 await handle_auto_delete(client, sent_msg, callback_query.message.chat.id)
-                await log_download(client, download_url, book, callback_query)
+                await log_download(client, processed_url, book, callback_query)
                 await progress_msg.delete()
 
             except Exception as e:
                 error_msg = "Failed to send file: "
-                if "WEBPAGE_MEDIA_EMPTY" in str(e):
-                    error_msg += "Invalid file URL (server might block Telegram)"
+                if "WEBPAGE_CURL_FAILED" in str(e):
+                    error_msg += "Libgen server blocked Telegram. Try another mirror."
+                elif "WEBPAGE_MEDIA_EMPTY" in str(e):
+                    error_msg += "File format not supported by Telegram."
                 else:
                     error_msg += str(e)
                 
