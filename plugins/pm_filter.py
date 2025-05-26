@@ -2910,6 +2910,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     # search for the book in zlibreary library
     try:
         movies = await get_poster(mv_rqst, bulk=True)
+        print("SPELLCHECK MOVIES:", movies)    
     except Exception as e: #if zlibreary is down or any other error
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
@@ -2925,7 +2926,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         return
 
     
-    movielist = []
+
     if not movies:
         google_titles_api = []
 
@@ -2983,13 +2984,10 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             await k.delete()
             return
 
-    
-    # if movies found, extract titles
-    movielist = [movie.get('title') for movie in movies]
-    SPELL_CHECK[mv_id] = movielist
+
 
     # Inside your existing code:
-    if AI_SPELL_CHECK and vj_search:  # Simplified boolean check
+    if AI_SPELL_CHECK == True and vj_search == True:
         movienamelist = [movie.get('title') for movie in movies]
         
         # Find best matching title using fuzzy logic
@@ -3058,6 +3056,11 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         return
     
     else:
+        movielist = []
+        # if movies found, extract titles
+        movielist = [movie.get('title') for movie in movies]
+        SPELL_CHECK[mv_id] = movielist
+
         btn = [
             [
                 InlineKeyboardButton(
