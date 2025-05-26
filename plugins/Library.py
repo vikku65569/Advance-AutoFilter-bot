@@ -375,12 +375,36 @@ async def handle_pagination(client, callback_query):
         logger.error(f"Pagination error: {e}")
         await callback_query.answer("Error handling pagination!")
 
+@Client.on_callback_query(filters.regex(r"^cancel_"))
+async def handle_cancel_download(client, callback_query: CallbackQuery):
+    user_id = int(callback_query.data.split('_')[1])
+    
+    if user_id in ACTIVE_DOWNLOADS:
+        ACTIVE_DOWNLOADS[user_id]['cancelled'] = True
+        temp_path = ACTIVE_DOWNLOADS[user_id]['path']
+        
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as e:
+                logger.error(f"Failed to delete cancelled file: {e}")
+        
+        try:
+            await callback_query.answer("Download cancelled!", show_alert=False)
+        except Exception as e:
+            logger.error(f"Cancel answer error: {e}")
+    else:
+        try:
+            await callback_query.answer("No active download to cancel", show_alert=False)
+        except Exception as e:
+            logger.error(f"Cancel answer error: {e}")
 
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_download_callback(client, callback_query):
     """Handle download callback queries"""
     user_id = callback_query.from_user.id
     async with USER_LOCKS[user_id]:
+        progress_msg = None
         try:
             data = callback_query.data.split('_')
             search_key = data[1]
@@ -401,7 +425,6 @@ async def handle_download_callback(client, callback_query):
                 await callback_query.answer("❌ No direct download available")
                 return
 
-
             await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
 
@@ -413,13 +436,15 @@ async def handle_download_callback(client, callback_query):
             os.makedirs("downloads", exist_ok=True)
 
             try:
-                await progress_msg.edit("⬇️ Downloading file... (0%)")
                 await download_libgen_file(
                     url=download_url,
                     temp_path=temp_path,
                     progress_msg=progress_msg,
                     user_id=user_id
                 )
+
+                if ACTIVE_DOWNLOADS.get(user_id, {}).get('cancelled', False):
+                    raise Exception("Download cancelled by user")
 
                 await progress_msg.edit("📤 Uploading to Telegram...")
                 sent_msg = await upload_to_telegram(
@@ -436,38 +461,37 @@ async def handle_download_callback(client, callback_query):
                 await progress_msg.delete()
 
             except Exception as e:
+                error_msg = f"❌ {'Download cancelled' if 'cancelled' in str(e) else 'Download failed'}: {str(e) or 'Unknown error'}"
+                if progress_msg:
+                    try:
+                        await progress_msg.edit(error_msg)
+                    except Exception as edit_error:
+                        try:
+                            progress_msg = await callback_query.message.reply(error_msg)
+                        except Exception as fallback_error:
+                            logger.error(f"Failed to send error message: {fallback_error}")
+                else:
+                    try:
+                        await callback_query.message.reply(error_msg)
+                    except Exception as fallback_error:
+                        logger.error(f"Failed to send error message: {fallback_error}")
+                
                 logger.error(f"Download error: {str(e) or 'Unknown error'}", exc_info=True)
-                await progress_msg.edit(f"❌ Download failed: {str(e) or 'Unknown error'}")
-                await asyncio.sleep(5)
             
             finally:
+                ACTIVE_DOWNLOADS.pop(user_id, None)
                 if os.path.exists(temp_path):
                     try: os.remove(temp_path)
                     except: pass
 
         except Exception as e:
             logger.error(f"Callback error: {e}")
-            await callback_query.answer("❌ Error processing request")
-
-
-@Client.on_callback_query(filters.regex(r"^cancel_"))
-async def handle_cancel_download(client, callback_query: CallbackQuery):
-    user_id = int(callback_query.data.split('_')[1])
-    
-    if user_id in ACTIVE_DOWNLOADS:
-        ACTIVE_DOWNLOADS[user_id]['cancelled'] = True
-        temp_path = ACTIVE_DOWNLOADS[user_id]['path']
-        
-        if os.path.exists(temp_path):
             try:
-                os.remove(temp_path)
-            except Exception as e:
-                logger.error(f"Failed to delete cancelled file: {e}")
-        
-        await callback_query.answer("Download cancelled!")
-        try:
-            await callback_query.message.edit("❌ Download cancelled by user")
-        except Exception as e:
-            logger.error(f"Failed to update cancellation message: {e}")
-    else:
-        await callback_query.answer("No active download to cancel")
+                await callback_query.answer("❌ Error processing request", show_alert=False)
+            except Exception as answer_error:
+                logger.error(f"Failed to answer callback: {answer_error}")
+            if progress_msg:
+                try:
+                    await progress_msg.edit("❌ Processing failed due to unexpected error")
+                except Exception as edit_error:
+                    logger.error(f"Failed to update progress message: {edit_error}")
