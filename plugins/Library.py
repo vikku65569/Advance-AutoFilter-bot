@@ -394,37 +394,42 @@ async def handle_download_callback(client, callback_query):
                     'free_bytes': usage.free
                 }
 
-            def parse_size(size_str):
+            def parse_size(size_str: str) -> float:
+                """
+                Parse a LibGen size string (e.g. "1005 Kb", "2.3 MiB", "0.5 GB")
+                into a float value in megabytes.
+                """
                 try:
-                    if 'MiB' in size_str or 'MB' in size_str:
-                        return float(size_str.split()[0])
-                    elif 'GiB' in size_str or 'GB' in size_str:
-                        return float(size_str.split()[0]) * 1024
-                    elif 'KiB' in size_str or 'KB' in size_str:
-                        return float(size_str.split()[0]) / 1024
-                    return 0
-                except:
-                    return 0
+                    parts = size_str.strip().split()
+                    value = float(parts[0])
+                    unit = parts[1].lower()
+                    if unit in ("b",):
+                        return value / (1024 * 1024)
+                    if unit in ("kb", "kib"):
+                        return value / 1024
+                    if unit in ("mb", "mib"):
+                        return value
+                    if unit in ("gb", "gib"):
+                        return value * 1024
+                except Exception:
+                    pass
+                return 0.0
 
-            # Check if file is over 50MB
-            file_size_mb = parse_size(book.get('Size', '0 MiB'))
+            # Check if file is over 50MB and we have enough free disk
+            file_size_mb = parse_size(book.get('Size', '0 B'))
             if file_size_mb > 50:
-                disk = get_disk_usage()
-                required_space = file_size_mb * 2 * 1024 * 1024  # Double the file size in bytes
-                
-                if disk['free_bytes'] < required_space:
-                    resource_msg = (
-                        "⚠️ Server Resources Exhausted!\n\n"
-                        f"File Size: {file_size_mb:.1f}MB\n"
-                        f"Available Space: {disk['free']}\n"
-                        f"Total Space: {disk['total']}\n\n"
-                        "Please try:\n"
-                        "1. Smaller files\n"
-                        "2. Later when space is available"
+                du = shutil.disk_usage(os.getcwd())
+                free_mb = du.free / (1024 * 1024)
+                # require double the file size to be safe
+                if free_mb < file_size_mb * 2:
+                    await callback_query.message.reply(
+                        "⚠️ Server resource alert!\n\n"
+                        f"Requested file is ~{file_size_mb:.1f} MB, but I only have {free_mb:.1f} MB free.\n"
+                        "Please try a smaller file or try again later when space is available."
                     )
-                    await callback_query.message.reply(resource_msg)
                     await callback_query.answer()
                     return
+            # —— END REPLACEMENT ——            
 
             await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
