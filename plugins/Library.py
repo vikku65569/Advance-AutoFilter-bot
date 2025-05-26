@@ -27,7 +27,7 @@ search_cache = {}
 RESULTS_PER_PAGE = 10
 
 def escape_markdown(text: str) -> str:
-    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    escape_chars = r"_*[]()~>#+-=|{}.!"
     return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 async def libgen_search(query: str):
@@ -304,7 +304,7 @@ async def handle_search_command(client, message):
         )
 
     except IndexError:
-        await message.reply("⚠️ Please provide a search query!\nExample: `/search The Great Gatsby`", 
+        await message.reply("⚠️ Please provide a search query!\nExample: /search The Great Gatsby", 
                           parse_mode=enums.ParseMode.MARKDOWN)
     except Exception as e:
         logger.error(f"Search error: {e}")
@@ -376,60 +376,6 @@ async def handle_download_callback(client, callback_query):
                 await callback_query.answer("❌ No direct download available")
                 return
 
-            # New resource check implementation
-            def format_bytes(size):
-                units = ['B', 'KB', 'MB', 'GB', 'TB']
-                unit_index = 0
-                while size >= 1024 and unit_index < len(units)-1:
-                    size /= 1024
-                    unit_index += 1
-                return f"{size:.2f} {units[unit_index]}"
-
-            def get_disk_usage():
-                usage = shutil.disk_usage(os.getcwd())
-                return {
-                    'total': format_bytes(usage.total),
-                    'used': format_bytes(usage.used),
-                    'free': format_bytes(usage.free),
-                    'free_bytes': usage.free
-                }
-
-            def parse_size(size_str: str) -> float:
-                """
-                Parse a LibGen size string (e.g. "1005 Kb", "2.3 MiB", "0.5 GB")
-                into a float value in megabytes.
-                """
-                try:
-                    parts = size_str.strip().split()
-                    value = float(parts[0])
-                    unit = parts[1].lower()
-                    if unit in ("b",):
-                        return value / (1024 * 1024)
-                    if unit in ("kb", "kib"):
-                        return value / 1024
-                    if unit in ("mb", "mib"):
-                        return value
-                    if unit in ("gb", "gib"):
-                        return value * 1024
-                except Exception:
-                    pass
-                return 0.0
-
-            # Check if file is over 50MB and we have enough free disk
-            file_size_mb = parse_size(book.get('Size', '0 B'))
-            if file_size_mb > 50:
-                du = shutil.disk_usage(os.getcwd())
-                free_mb = du.free / (1024 * 1024)
-                # require double the file size to be safe
-                if free_mb < file_size_mb * 2:
-                    await callback_query.message.reply(
-                        "⚠️ Server resource alert!\n\n"
-                        f"Requested file is ~{file_size_mb:.1f} MB, but I only have {free_mb:.1f} MB free.\n"
-                        "Please try a smaller file or try again later when space is available."
-                    )
-                    await callback_query.answer()
-                    return
-            # —— END REPLACEMENT ——            
 
             await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
