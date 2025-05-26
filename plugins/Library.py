@@ -30,15 +30,35 @@ def escape_markdown(text: str) -> str:
     return "".join(f"\\{char}" if char in escape_chars else char for char in text)
 
 async def libgen_search(query: str):
-    """Reusable search function"""
+    """Reusable search function with enhanced error handling"""
     try:
+        # Attempt primary search methods
         default_results = lg.search_default(query)
         filtered_results = lg.search_title_filtered(query, filters={}, exact_match=True)
-        search_default_filtered = lg.search_default_filtered(query, filters={},exact_match=False)
-        return filtered_results + default_results + search_default_filtered # Combine both result lists
+        search_default_filtered = lg.search_default_filtered(query, filters={}, exact_match=False)
+        
+        # Validate results before combining
+        valid_results = []
+        for result in [default_results, filtered_results, search_default_filtered]:
+            if isinstance(result, list):
+                valid_results.extend(result)
+            else:
+                logger.warning(f"Unexpected result type: {type(result)}")
+        
+        return valid_results
+        
     except FloodWait as e:
         await asyncio.sleep(e.value + 2)
-        return lg.search_title(query)
+        try:
+            # Fallback search with validation
+            fallback_results = lg.search_title(query)
+            return fallback_results if isinstance(fallback_results, list) else []
+        except Exception as fallback_error:
+            logger.error(f"LibGen fallback error: {str(fallback_error)}", exc_info=True)
+            return []
+    except Exception as main_error:
+        logger.error(f"Main search error: {str(main_error)}", exc_info=True)
+        return []
 
 async def create_search_buttons(results: list, search_key: str, page: int):
     """Create paginated inline keyboard markup"""
