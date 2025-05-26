@@ -64,6 +64,7 @@ class Database:
         self.grp = self.db.groups
         self.users = self.db.uersz
         self.bot = self.db.clone_bots
+        self.db.file_titles.create_index("title", unique=True)  # Add this line
 
 
     def new_user(self, id, name):
@@ -305,5 +306,19 @@ class Database:
         user = await self.col.find_one({'id': int(id)})
         return user.get('save', False) 
     
+
+    async def is_title_exists(self, title: str):
+        """Check if title exists in file store"""
+        return bool(await self.db.file_titles.find_one({"title": title.strip().lower()}))
+    
+    async def add_file_title(self, title: str):
+        """Add new title to database"""
+        try:
+            await self.db.file_titles.insert_one({
+                "title": title.strip().lower(),
+                "added_at": datetime.datetime.now()
+            })
+        except DuplicateKeyError:
+            pass
 
 db = Database(USER_DB_URI, DATABASE_NAME)

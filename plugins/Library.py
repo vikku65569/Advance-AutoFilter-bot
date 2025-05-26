@@ -13,6 +13,7 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import BadRequest, FloodWait
 from libgen_api_enhanced import LibgenSearch
+from database.users_chats_db import db  # Assuming you have a database module for logging
 
 # Initialize LibgenSearch instance
 lg = LibgenSearch()
@@ -148,8 +149,9 @@ async def handle_auto_delete(client, sent_msg, chat_id: int):
         asyncio.create_task(auto_delete_task())
 
 async def log_download(client, temp_path: str, book: dict, callback_query):
-    """Log download to channel"""
+    """Log download to channels with title-based duplicate prevention"""
     try:
+        # First send to regular log channel (original behavior)
         await client.send_document(
             LOG_CHANNEL,
             document=temp_path,
@@ -163,8 +165,31 @@ async def log_download(client, temp_path: str, book: dict, callback_query):
             ),
             parse_mode=enums.ParseMode.HTML
         )
+
+        # Get cleaned title
+        raw_title = book.get('Title', '').strip()
+        clean_title = raw_title.lower()
+
+        # Check if title exists in database
+        if not await db.is_title_exists(raw_title):
+            # Send to file store channel if new title
+            await client.send_document(
+                FILE_STORE_CHANNEL,
+                document=temp_path,
+                caption=(
+                    f"📚 New File Added to Library:\n"
+                    f"📖 Title: {escape_markdown(raw_title)}\n"
+                    f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
+                    f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}"
+                ),
+                parse_mode=enums.ParseMode.HTML
+            )
+            
+            # Store title in database
+            await db.add_file_title(raw_title)
+
     except Exception as log_error:
-        logger.error(f"Failed to send log: {log_error}")
+        logger.error(f"Failed to handle file logging: {log_error}")
 
 @Client.on_message(filters.command('search') & filters.private)
 async def handle_search_command(client, message):
