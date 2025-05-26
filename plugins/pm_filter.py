@@ -2910,7 +2910,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     # Search for the book in zlibrary
     try:
         movies = await get_poster(mv_rqst, bulk=True)
-        print("SPELLCHECK MOVIES:", movies)     
     except Exception as e:
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
@@ -3011,7 +3010,7 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         if settings['auto_delete']:
             await asyncio.sleep(1000)
             await spell_check_del.delete()
-            
+
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)
     group_id = message.chat.id
