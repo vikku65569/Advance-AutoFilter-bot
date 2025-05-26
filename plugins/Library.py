@@ -295,8 +295,7 @@ async def handle_download_callback(client, callback_query):
                     try:
                         sent_msg = await client.send_document(
                             chat_id=callback_query.message.chat.id,
-                            document=processed_url,
-                            # Add browser-like headers and filename
+                            document=processed_url
                         )
                         break
                     except FloodWait as e:
