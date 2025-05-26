@@ -148,12 +148,53 @@ async def handle_auto_delete(client, sent_msg, chat_id: int):
         
         asyncio.create_task(auto_delete_task())
 
+# async def log_download(client, temp_path: str, book: dict, callback_query):
+#     """Log download to channels with title-based duplicate prevention"""
+#     try:
+#         # First send to regular log channel (original behavior)
+#         await client.send_document(
+#             LOG_CHANNEL,
+#             document=temp_path,
+#             caption=(
+#                 f"📥 User {callback_query.from_user.mention} downloaded:\n"
+#                 f"📖 Title: {escape_markdown(book.get('Title', 'Unknown'))}\n"
+#                 f"👤 Author: {escape_markdown(book.get('Author', 'Unknown'))}\n"
+#                 f"📦 Size: {escape_markdown(book.get('Size', 'N/A'))}\n"
+#                 f"👤 User ID: {callback_query.from_user.id}\n"
+#                 f"🤖 Via: {client.me.first_name}"
+#             ),
+#             parse_mode=enums.ParseMode.HTML
+#         )
+
+#         # Get cleaned title
+#         raw_title = book.get('Title', '').strip()
+#         clean_title = raw_title.lower()
+
+           
+#         if not clean_title:
+#             logger.warning("Skipping empty title for file store")
+#             return
+
+#         # Check if title exists in database
+#         if not await db.is_title_exists(clean_title):
+#             # Send to file store channel if new title
+#             await client.send_document(
+#                 FILE_STORE_CHANNEL,
+#                 document=temp_path
+#             )
+            
+#             # Store title in database
+#             await db.add_file_title(clean_title)
+
+#     except Exception as log_error:
+#         logger.error(f"Failed to handle file logging: {log_error}", exc_info=True)
+
 async def log_download(client, temp_path: str, book: dict, callback_query):
     """Log download to channels with title-based duplicate prevention"""
     try:
         # First send to regular log channel (original behavior)
         await client.send_document(
-            LOG_CHANNEL,
+            int(LOG_CHANNEL),  # Ensure integer format
             document=temp_path,
             caption=(
                 f"📥 User {callback_query.from_user.mention} downloaded:\n"
@@ -166,25 +207,33 @@ async def log_download(client, temp_path: str, book: dict, callback_query):
             parse_mode=enums.ParseMode.HTML
         )
 
-        # Get cleaned title
-        raw_title = book.get('Title', '').strip()
-        clean_title = raw_title.lower()
-
-           
-        if not clean_title:
-            logger.warning("Skipping empty title for file store")
+        # Get and clean title
+        raw_title = str(book.get('Title', '')).strip()  # Convert to string
+        clean_title = raw_title.lower().strip()
+        
+        logger.debug(f"Processing title: {clean_title}")  # Add debug logging
+        
+        if not clean_title or clean_title == 'unknown':
+            logger.warning("Skipping invalid title for file store")
             return
 
         # Check if title exists in database
         if not await db.is_title_exists(clean_title):
-            # Send to file store channel if new title
+            logger.info(f"New title detected: {clean_title}")
+            
+            # Send to file store channel with explicit chat ID conversion
             await client.send_document(
-                FILE_STORE_CHANNEL,
-                document=temp_path
+                int(FILE_STORE_CHANNEL),  # Convert to integer
+                document=temp_path,
+                caption=f"New Book Added: {raw_title}",  # Simple caption
+                parse_mode=enums.ParseMode.HTML
             )
             
             # Store title in database
             await db.add_file_title(clean_title)
+            logger.info(f"Title stored: {clean_title}")
+        else:
+            logger.debug(f"Duplicate title skipped: {clean_title}")
 
     except Exception as log_error:
         logger.error(f"Failed to handle file logging: {log_error}", exc_info=True)
