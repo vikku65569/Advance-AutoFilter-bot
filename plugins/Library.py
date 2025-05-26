@@ -74,10 +74,10 @@ async def create_search_buttons(results: list, search_key: str, page: int):
 
     return InlineKeyboardMarkup(buttons)
 
-# In your download_libgen_file function, modify the progress section:
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
     """Reusable file downloader with progress and retries"""
     last_percent = -1
+    last_message = ""  # Initialize variable to prevent UnboundLocalError
     max_retries = 3
     retry_delay = 5  # seconds
     
@@ -152,7 +152,6 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                     continue
                 raise
             break
-
 # In your upload_to_telegram function, modify the progress callback:
 async def upload_to_telegram(client, temp_path: str, book: dict, progress_msg, chat_id: int, user_id: int):
     """Reusable Telegram uploader with progress for large files"""
