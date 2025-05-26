@@ -78,7 +78,6 @@ async def create_search_buttons(results: list, search_key: str, page: int):
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
     """Reusable file downloader with progress and retries"""
     last_percent = -1
-    last_message = ""
     max_retries = 3
     retry_delay = 5  # seconds
     
@@ -91,10 +90,13 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
 
                     total_size = int(response.headers.get('content-length', 0)) or None
 
-                     # Check if file is larger than 10 MB
+                    # Check if file is larger than 10 MB
                     if total_size and total_size > 10 * 1024 * 1024:
-                        await progress_msg.edit("❌ File is larger than 10 MB and cannot be downloaded.")
-                        return
+                        await progress_msg.edit(
+                            f"❌ File exceeds 10MB limit.\n"
+                            f"🔗 Direct Download: {url}"
+                        )
+                        raise Exception("FILE_TOO_LARGE")
                     
                     downloaded = 0
                     
@@ -377,10 +379,10 @@ async def handle_download_callback(client, callback_query):
                 return
 
             book = results[index]
-            if not (download_url := book.get('Direct_Download_Link')):
+            download_url = book.get('Direct_Download_Link')
+            if not download_url:
                 await callback_query.answer("❌ No direct download available")
                 return
-
 
             await callback_query.answer("📥 Starting download...")
             progress_msg = await callback_query.message.reply("⏳ Downloading book from server...")
@@ -416,9 +418,13 @@ async def handle_download_callback(client, callback_query):
                 await progress_msg.delete()
 
             except Exception as e:
-                logger.error(f"Download error: {str(e) or 'Unknown error'}", exc_info=True)
-                await progress_msg.edit(f"❌ Download failed: {str(e) or 'Unknown error'}")
-                await asyncio.sleep(5)
+                if "FILE_TOO_LARGE" in str(e):
+                    # Message already handled in download_libgen_file
+                    pass
+                else:
+                    logger.error(f"Download error: {str(e) or 'Unknown error'}", exc_info=True)
+                    await progress_msg.edit(f"❌ Download failed: {str(e) or 'Unknown error'}")
+                    await asyncio.sleep(5)
             
             finally:
                 if os.path.exists(temp_path):
