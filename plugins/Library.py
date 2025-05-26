@@ -229,6 +229,7 @@ async def handle_pagination(client, callback_query):
     except Exception as e:
         logger.error(f"Pagination error: {e}")
         await callback_query.answer("Error handling pagination!")
+
 @Client.on_callback_query(filters.regex(r"^lgdl_"))
 async def handle_download_callback(client, callback_query):
     """Handle download callback queries with improved validation"""
@@ -265,11 +266,9 @@ async def handle_download_callback(client, callback_query):
                 max_retries = 3
                 for attempt in range(max_retries):
                     try:
-                        # Removed request_timeout parameter
                         sent_msg = await client.send_document(
                             chat_id=callback_query.message.chat.id,
-                            document=download_url,
-                            caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}"
+                            document=download_url
                         )
                         break
                     except FloodWait as e:
