@@ -77,12 +77,14 @@ async def create_search_buttons(results: list, search_key: str, page: int):
 
     return InlineKeyboardMarkup(buttons)
 
+
 async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: int):
     """Reusable file downloader with progress, retries, and cancellation"""
     last_percent = -1
     max_retries = 3
     retry_delay = 5
-    message_valid = True  # Track message validity
+    message_valid = True
+    cancelled = False
     
     try:
         cancel_button = InlineKeyboardMarkup([[InlineKeyboardButton("🚫 Cancel Download", callback_data=f"cancel_{user_id}")]])
@@ -93,42 +95,45 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
             message_valid = False
 
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3600)) as session:
+            # Register active download at start
+            ACTIVE_DOWNLOADS[user_id] = {
+                'cancelled': False,
+                'path': temp_path,
+                'message': progress_msg
+            }
+            
             for attempt in range(max_retries):
                 try:
+                    if cancelled:
+                        break
+                        
                     async with session.get(url) as response:
                         if response.status != 200:
                             raise Exception(f"Download failed with status {response.status}")
 
                         total_size = int(response.headers.get('content-length', 0)) or None
                         downloaded = 0
-                        
-                        ACTIVE_DOWNLOADS[user_id] = {
-                            'cancelled': False,
-                            'path': temp_path,
-                            'message': progress_msg
-                        }
-                        
+
                         async with aiofiles.open(temp_path, 'wb') as f:
                             async for chunk in response.content.iter_chunked(1024*1024*2):
                                 if ACTIVE_DOWNLOADS.get(user_id, {}).get('cancelled', False):
-                                    raise Exception("Download cancelled by user")
-                                    
-                                if not chunk:
+                                    cancelled = True
+                                    break
+                                
+                                if cancelled or not chunk:
                                     continue
 
-                                # Write chunk
                                 await f.write(chunk)
                                 downloaded += len(chunk)
                                 
-                                if not message_valid:
-                                    continue  # Skip updates if message is invalid
-                                
+                                if not message_valid or cancelled:
+                                    continue
+
                                 # Progress updates
                                 if total_size:
                                     current_time = datetime.now()
                                     percent = round((downloaded / total_size) * 100)
                                     
-                                    # Update logic with message validity check
                                     try:
                                         if (percent != last_percent and percent - last_percent >= 1) or \
                                            (current_time - LAST_PROGRESS_UPDATE[user_id][1] > timedelta(seconds=2)):
@@ -141,38 +146,38 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
                                     except BadRequest as e:
                                         if "MESSAGE_ID_INVALID" in str(e):
                                             message_valid = False
-                                            logger.warning("Progress message became invalid, stopping updates")
-                                        elif "MESSAGE_NOT_MODIFIED" not in str(e):
-                                            logger.warning(f"Progress update failed: {e}")
-                                    except Exception as e:
-                                        logger.warning(f"Progress update failed: {e}")
-                                    except BadRequest as e:
-                                        if "MESSAGE_ID_INVALID" in str(e):
-                                            message_valid = False
-                                            logger.warning("Progress message became invalid, stopping updates")
-                                        elif "MESSAGE_NOT_MODIFIED" not in str(e):
-                                            logger.warning(f"Progress update failed: {e}")
                                     except Exception as e:
                                         logger.warning(f"Progress update failed: {e}")
 
-                        return
+                            if cancelled:
+                                raise Exception("Download cancelled by user")
+
+                        return  # Successful download
 
                 except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-                    if attempt < max_retries - 1:
+                    if attempt < max_retries - 1 and not cancelled:
                         logger.warning(f"Download attempt {attempt+1} failed: {str(e)}, retrying...")
                         await asyncio.sleep(retry_delay)
                         continue
                     raise
                 finally:
-                    ACTIVE_DOWNLOADS.pop(user_id, None)
-                break
+                    if cancelled:
+                        break  # Break retry loop if cancelled
     except Exception as e:
-        if message_valid:
+        if message_valid and not cancelled:
             try:
                 await progress_msg.edit(f"❌ Download failed: {str(e)[:100]}")
             except Exception as edit_error:
                 logger.error(f"Failed to update progress message: {edit_error}")
         raise
+    finally:
+        ACTIVE_DOWNLOADS.pop(user_id, None)  # Cleanup only after all operations
+        if cancelled and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as e:
+                logger.error(f"Failed to remove cancelled file: {e}")
+
 
 # In your upload_to_telegram function, modify the progress callback:
 async def upload_to_telegram(client, temp_path: str, book: dict, progress_msg, chat_id: int, user_id: int):
@@ -409,6 +414,7 @@ async def handle_download_callback(client, callback_query):
     user_id = callback_query.from_user.id
     async with USER_LOCKS[user_id]:
         progress_msg = None
+        temp_path = None
         try:
             data = callback_query.data.split('_')
             search_key = data[1]
@@ -451,14 +457,11 @@ async def handle_download_callback(client, callback_query):
                     user_id=user_id
                 )
 
-                if ACTIVE_DOWNLOADS.get(user_id, {}).get('cancelled', False):
-                    raise Exception("Download cancelled by user")
-
+                # Only proceed if download completed successfully
                 try:
                     await progress_msg.edit("📤 Uploading to Telegram...")
                 except BadRequest as e:
                     if "MESSAGE_ID_INVALID" in str(e):
-                        logger.warning("Progress message invalid, creating new one")
                         progress_msg = await callback_query.message.reply("📤 Uploading to Telegram...")
 
                 sent_msg = await upload_to_telegram(
@@ -478,7 +481,7 @@ async def handle_download_callback(client, callback_query):
                     logger.warning(f"Failed to delete progress message: {e}")
 
             except Exception as e:
-                error_msg = f"❌ {'Download cancelled' if 'cancelled' in str(e) else 'Error'}: {str(e)[:100]}"
+                error_msg = "❌ Download cancelled by user" if "cancelled" in str(e).lower() else f"❌ Error: {str(e)[:100]}"
                 try:
                     if progress_msg:
                         await progress_msg.edit(error_msg)
@@ -496,15 +499,14 @@ async def handle_download_callback(client, callback_query):
                 logger.error(f"Download error: {str(e)}", exc_info=True)
             
             finally:
-                ACTIVE_DOWNLOADS.pop(user_id, None)
-                if os.path.exists(temp_path):
+                if temp_path and os.path.exists(temp_path):
                     try: 
                         os.remove(temp_path)
                     except Exception as e:
                         logger.error(f"Failed to remove temp file: {e}")
 
         except Exception as e:
-            logger.error(f"Callback error: {e}")
+            logger.error(f"Callback error: {e}", exc_info=True)
             try:
                 await callback_query.answer("❌ Error processing request", show_alert=False)
             except Exception as e:
