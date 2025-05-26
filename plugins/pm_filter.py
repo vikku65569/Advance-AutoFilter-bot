@@ -2904,14 +2904,14 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
     settings = await get_settings(msg.chat.id)
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|book(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\book|any(one)|with\ssubtitle(s)?)",
-        "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
+        "", msg.text, flags=re.IGNORECASE)
     query = query.strip() + " book"
 
-    # search for the book in zlibreary library
+    # Search for the book in zlibrary
     try:
         movies = await get_poster(mv_rqst, bulk=True)
-        print("SPELLCHECK MOVIES:", movies)    
-    except Exception as e: #if zlibreary is down or any other error
+        print("SPELLCHECK MOVIES:", movies)     
+    except Exception as e:
         logger.exception(e)
         reqst_gle = mv_rqst.replace(" ", "+")
         button = [[
@@ -2924,8 +2924,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         await asyncio.sleep(30)
         await k.delete()
         return
-
-    
 
     if not movies:
         google_titles_api = []
@@ -2943,7 +2941,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
         google_titles = google_titles_api
 
         if google_titles:
-
             SPELL_CHECK[mv_id] = google_titles
             btn = [
                 [InlineKeyboardButton(text=title.strip(), callback_data=f"spol#{reqstr1}#{i}")]
@@ -2970,7 +2967,6 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
                 return
         
         else:
-            # No Google results either, fallback to plain Google button
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[
                 InlineKeyboardButton("🔍 Gᴏᴏɢʟᴇ Sᴘᴇʟʟ Yᴏᴜʀsᴇʟғ ", url=f"https://www.google.com/search?q={reqst_gle}")
@@ -2984,109 +2980,38 @@ async def advantage_spell_chok(client, name, msg, reply_msg, vj_search):
             await k.delete()
             return
 
+    # If movies found, show zlibrary suggestions
+    movielist = [movie.get('title') for movie in movies]
+    SPELL_CHECK[mv_id] = movielist
 
-
-    # Inside your existing code:
-    if AI_SPELL_CHECK == True and vj_search == True:
-        movienamelist = [movie.get('title') for movie in movies]
-        
-        # Find best matching title using fuzzy logic
-        best_match = None
-        highest_ratio = 0
-        
-        for Zahid in movienamelist:
-            # Calculate similarity between query and title
-            similarity = SequenceMatcher(
-                None, 
-                mv_rqst.lower(),  # Case-insensitive comparison
-                Zahid.lower()
-            ).ratio()
-            
-            # Track the best match
-            if similarity > highest_ratio:
-                highest_ratio = similarity
-                best_match = Zahid
-
-        # Only proceed if we found a reasonably good match
-        if best_match and highest_ratio >= 0.6:  # Adjust threshold as needed (0-1)
-            await reply_msg.edit_text(f"🔍 Doing deep search for '{best_match}'...")
-            
-            try:
-                results = await libgen_search(best_match)  # Search with best match
-            except Exception as e:
-                logger.error(f"LibGen search failed: {e}")
-                results = []
-
-            if results:
-                search_key = str(uuid4())
-                search_cache[search_key] = {
-                    'results': results,
-                    'query': best_match,
-                    'time': datetime.now()
-                }
-
-                buttons = await create_search_buttons(results, search_key, 1)
-
-                response = [
-                    f"📚 Found {len(results)} LibGen results for <b>{best_match}</b>:",
-                    f"Rᴇǫᴜᴇsᴛᴇᴅ Bʏ ☞ {msg.from_user.mention if msg.from_user else 'Unknown User'}",
-                    f"Sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғʀᴏᴍ ᴛʜᴇ Mᴀɢɪᴄᴀʟ Lɪʙʀᴀʀʏ",
-                    f"📑 Page 1/{(len(results) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE}"
-                ]
-
-                await reply_msg.edit(
-                    "\n".join(response),
-                    reply_markup=buttons,
-                    parse_mode=enums.ParseMode.HTML
-                )
-                return  # Stop processing after showing results
-
-        # If no good match found, continue to existing Google fallback
-            
-        reqst_gle = mv_rqst.replace(" ", "+")
-        button = [[
-            InlineKeyboardButton("Gᴏᴏɢʟᴇ ǫᴜᴇʀʏ", url=f"https://www.google.com/search?q={reqst_gle}")
-        ]]
-
-        if NO_RESULTS_MSG :
-            await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
-        k = await reply_msg.edit_text(text=script.I_CUDNT.format(mv_rqst), reply_markup=InlineKeyboardMarkup(button))
-        await asyncio.sleep(60)
-        await k.delete()
-        return
-    
-    else:
-        movielist = []
-        # if movies found, extract titles
-        movielist = [movie.get('title') for movie in movies]
-        SPELL_CHECK[mv_id] = movielist
-
-        btn = [
-            [
-                InlineKeyboardButton(
-                    text=movie_name.strip(),
-                    callback_data=f"spol#{reqstr1}#{k}",
-                )
-            ]
-            for k, movie_name in enumerate(movielist)
+    btn = [
+        [
+            InlineKeyboardButton(
+                text=movie_name.strip(),
+                callback_data=f"spol#{reqstr1}#{k}",
+            )
         ]
-        btn.append([InlineKeyboardButton(text=" ❌ Close Z-library Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
-        spell_check_del = await reply_msg.edit_text(
-            text=script.CUDNT_FND.format(mv_rqst),
-            reply_markup=InlineKeyboardMarkup(btn)
-        )
-        try:
-            if settings['auto_delete']:
-                await asyncio.sleep(1000)
-                await spell_check_del.delete()
-        except KeyError:
-            grpid = await active_connection(str(msg.from_user.id))
-            await save_group_settings(grpid, 'auto_delete', True)
-            settings = await get_settings(msg.chat.id)
-            if settings['auto_delete']:
-                await asyncio.sleep(1000)
-                await spell_check_del.delete()
-
+        for k, movie_name in enumerate(movielist)
+    ]
+    btn.append([InlineKeyboardButton(text=" ❌ Close Z-library Suggestions", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+    
+    spell_check_del = await reply_msg.edit_text(
+        text=script.CUDNT_FND.format(mv_rqst),
+        reply_markup=InlineKeyboardMarkup(btn)
+    )
+    
+    try:
+        if settings['auto_delete']:
+            await asyncio.sleep(1000)
+            await spell_check_del.delete()
+    except KeyError:
+        grpid = await active_connection(str(msg.from_user.id))
+        await save_group_settings(grpid, 'auto_delete', True)
+        settings = await get_settings(msg.chat.id)
+        if settings['auto_delete']:
+            await asyncio.sleep(1000)
+            await spell_check_del.delete()
+            
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)
     group_id = message.chat.id
