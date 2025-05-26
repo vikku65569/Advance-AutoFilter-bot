@@ -141,7 +141,7 @@ async def handle_auto_delete(client, sent_msg, chat_id: int):
         async def auto_delete_task():
             await asyncio.sleep(AUTO_DELETE_TIME)
             try:
-                await sent_msg.delete()
+                # await sent_msg.delete()
                 await deleter_msg.edit(script.FILE_DELETED_MSG)
             except Exception as e:
                 logger.error(f"Auto-delete failed: {e}")
@@ -333,7 +333,7 @@ async def handle_download_callback(client, callback_query):
 
                 await handle_auto_delete(client, sent_msg, callback_query.message.chat.id)
                 await log_download(client, temp_path, book, callback_query)
-                await progress_msg.delete()
+                # await progress_msg.delete()
 
             except Exception as e:
                 logger.error(f"Download error: {e}")
