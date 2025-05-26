@@ -352,9 +352,10 @@ async def handle_download_callback(client, callback_query):
                 await log_download(client, temp_path, book, callback_query)
                 await progress_msg.delete()
 
+            # In handle_download_callback
             except Exception as e:
-                logger.error(f"Download error: {e}")
-                await progress_msg.edit(f"❌ Download failed: {str(e)}")
+                logger.error(f"Download error: {str(e) or 'Unknown error'}", exc_info=True)
+                await progress_msg.edit(f"❌ Download failed: {str(e) or 'Unknown error'}")
                 await asyncio.sleep(5)
             
             finally:
