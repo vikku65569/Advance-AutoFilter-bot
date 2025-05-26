@@ -90,11 +90,15 @@ async def download_libgen_file(url: str, temp_path: str, progress_msg, user_id: 
 
                     total_size = int(response.headers.get('content-length', 0)) or None
 
-                    # Check if file is larger than 10 MB
-                    if total_size and total_size > 10 * 1024 * 1024:
+                    # Check if file is larger than 50 MB
+                    if total_size and total_size > 50 * 1024 * 1024:
                         await progress_msg.edit(
-                            f"❌ File exceeds 10MB limit.\n"
-                            f"🔗 Direct Download: {url}"
+                            f"⚠️ <b>File Size Limit Exceeded</b> ⚠️\n\n"
+                            f"📦 File size: {round(total_size/1024/1024)}MB (Max 50MB allowed)\n"
+                            f"🔗 <a href='{url}'>Direct Download Link</a>\n\n"
+                            "<i>Please download directly using the link above</i>",
+                            parse_mode=enums.ParseMode.HTML,
+                            disable_web_page_preview=True
                         )
                         raise Exception("FILE_TOO_LARGE")
                     
