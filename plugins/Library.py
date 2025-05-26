@@ -296,13 +296,7 @@ async def handle_download_callback(client, callback_query):
                         sent_msg = await client.send_document(
                             chat_id=callback_query.message.chat.id,
                             document=processed_url,
-                            caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}",
                             # Add browser-like headers and filename
-                            file_name=f"{book.get('Title', 'file')[:40]}.{book.get('Extension', 'pdf')}",
-                            headers={
-                                "Referer": "https://libgen.rs/",
-                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                            }
                         )
                         break
                     except FloodWait as e:
