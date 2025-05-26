@@ -194,8 +194,7 @@ async def upload_to_telegram(client, temp_path: str, book: dict, progress_msg, c
             chat_id=chat_id,
             document=temp_path,
             caption=f"📚<b> {book.get('Title', 'Unknown')}</b>\n👤 <b> Author: </b> {book.get('Author', 'Unknown')}\n📦<b> Size:</b> {book.get('Size', 'N/A')}",
-            progress=progress,
-            chunk_size=chunk_size
+            progress=progress
         )
     except FloodWait as e:
         await progress_msg.edit(f"⚠️ Flood wait: Please wait {e.value} seconds")
